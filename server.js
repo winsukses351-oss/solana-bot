@@ -49,17 +49,17 @@ app.get('/api/health/dexscreener', async (req, res) => {
   }
 });
 
-// PHASE 2: MULTI-TOKEN SCANNER (Narik Banyak Token Solana Sekaligus)
+// PHASE 2: REAL TOKEN SCANNER (Bebas Nama, Fokus Solana Chain & Volume/Trend)
 app.get('/api/tokens/scan', async (req, res) => {
   try {
-    // Ambil dari profil token Solana paling aktif/trending
-    const response = await fetch('https://api.dexscreener.com/latest/dex/search?q=solana%20pump');
+    // Narik data dari token-token Solana yang sedang banyak dicari/trending
+    const response = await fetch('https://api.dexscreener.com/latest/dex/search?q=sol');
     const data = await response.json();
 
     if (!data.pairs) return res.json({ success: true, count: 0, data: [] });
 
     const tokens = data.pairs
-      .filter(pair => pair.chainId === 'solana' && pair.baseToken && pair.liquidity?.usd >= 500)
+      .filter(pair => pair.chainId === 'solana' && pair.baseToken && pair.liquidity?.usd >= 1000)
       .map(pair => {
         const createdAt = pair.pairCreatedAt ? new Date(pair.pairCreatedAt) : new Date();
         const ageHours = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60)));
@@ -76,6 +76,7 @@ app.get('/api/tokens/scan', async (req, res) => {
           dexUrl: pair.url
         };
       })
+      // Hapus filter nama, urutkan berdasarkan volume tertinggi
       .sort((a, b) => b.volume24h - a.volume24h);
 
     return res.json({ success: true, count: tokens.length, data: tokens });
@@ -83,6 +84,7 @@ app.get('/api/tokens/scan', async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
