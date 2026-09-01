@@ -11,7 +11,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Main UI Route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -23,19 +22,14 @@ app.get('/api/health/rpc', async (req, res) => {
     const response = await fetch('https://api.mainnet-beta.solana.com', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'getHealth'
-      })
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getHealth' })
     });
     const latency = Date.now() - startTime;
     const data = await response.json();
-
     if (data.result === 'ok') {
-      return res.json({ status: 'CONNECTED', latency: `${latency}ms`, url: 'solana-mainnet' });
+      return res.json({ status: 'CONNECTED', latency: `${latency}ms` });
     }
-    return res.json({ status: 'DEGRADED', latency: `${latency}ms`, details: data });
+    return res.json({ status: 'DEGRADED', latency: `${latency}ms` });
   } catch (err) {
     return res.status(500).json({ status: 'DISCONNECTED', error: err.message });
   }
@@ -46,7 +40,6 @@ app.get('/api/health/dexscreener', async (req, res) => {
   try {
     const response = await fetch('https://api.dexscreener.com/latest/dex/tokens/solana');
     const latency = Date.now() - startTime;
-
     if (response.ok) {
       return res.json({ status: 'CONNECTED', latency: `${latency}ms` });
     }
@@ -56,25 +49,23 @@ app.get('/api/health/dexscreener', async (req, res) => {
   }
 });
 
-// PHASE 2: REAL TOKEN SCANNER ENDPOINT
+// PHASE 2: MULTI-TOKEN SCANNER (Narik Banyak Token Solana Sekaligus)
 app.get('/api/tokens/scan', async (req, res) => {
   try {
-    const minLiquidity = Number(req.query.minLiquidity) || 1000;
-    const minVolume = Number(req.query.minVolume) || 2000;
-
-    const response = await fetch('https://api.dexscreener.com/latest/dex/search?q=solana');
+    // Ambil dari profil token Solana paling aktif/trending
+    const response = await fetch('https://api.dexscreener.com/latest/dex/search?q=solana%20pump');
     const data = await response.json();
 
     if (!data.pairs) return res.json({ success: true, count: 0, data: [] });
 
     const tokens = data.pairs
-      .filter(pair => pair.chainId === 'solana' && pair.baseToken)
+      .filter(pair => pair.chainId === 'solana' && pair.baseToken && pair.liquidity?.usd >= 500)
       .map(pair => {
         const createdAt = pair.pairCreatedAt ? new Date(pair.pairCreatedAt) : new Date();
         const ageHours = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60)));
         return {
           id: pair.pairAddress,
-          name: pair.baseToken.name || 'Unknown Token',
+          name: pair.baseToken.name || 'Unknown',
           symbol: pair.baseToken.symbol || '???',
           address: pair.baseToken.address,
           priceUsd: parseFloat(pair.priceUsd || 0),
@@ -85,7 +76,6 @@ app.get('/api/tokens/scan', async (req, res) => {
           dexUrl: pair.url
         };
       })
-      .filter(t => t.liquidityUsd >= minLiquidity && t.volume24h >= minVolume)
       .sort((a, b) => b.volume24h - a.volume24h);
 
     return res.json({ success: true, count: tokens.length, data: tokens });
