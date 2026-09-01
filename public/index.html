@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Solana WIN Network — Token Scanner</title>
+  <title>Solana WIN Network — Whale & Safety Check</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
 </head>
@@ -17,7 +17,7 @@
         <h1 class="text-xl font-bold text-emerald-400 flex items-center gap-2">
           ⚡ Solana WIN Network
         </h1>
-        <p class="text-xs text-slate-400">Phase 2: Live Token Scanner</p>
+        <p class="text-xs text-slate-400">Phase 3: Whale Tracker & Safety Check</p>
       </div>
       <button id="connect-wallet-btn" onclick="toggleWallet()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition self-end sm:self-auto shadow-lg shadow-emerald-950">
         Connect Wallet
@@ -69,7 +69,18 @@
       </div>
     </div>
 
-    <!-- PHASE 2: REAL TOKEN SCANNER PANEL -->
+    <!-- PHASE 3: WHALE TRACKER PANEL -->
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-800/80 pb-2">
+        <h2 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">🐋 Live Whale Activity</h2>
+        <span class="text-[10px] text-slate-500">Auto Refresh</span>
+      </div>
+      <div id="whale-list" class="space-y-2 text-xs max-h-48 overflow-y-auto">
+        <div class="text-center py-4 text-slate-500">Mendeteksi aktivitas transaksi paus...</div>
+      </div>
+    </div>
+
+    <!-- PHASE 2 & 3: TOKEN SCANNER WITH SAFETY BADGES -->
     <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-800/80 pb-2">
         <div>
@@ -81,9 +92,8 @@
         </button>
       </div>
 
-      <!-- Token List Stream -->
       <div id="token-list" class="space-y-2 text-xs max-h-96 overflow-y-auto pr-1">
-        <div class="text-center py-6 text-slate-500 animate-pulse">Memuat data token Solana...</div>
+        <div class="text-center py-6 text-slate-500 animate-pulse">Memuat data token...</div>
       </div>
     </div>
 
@@ -131,7 +141,31 @@
       } catch (e) { console.error(e); }
     }
 
-    // REAL TOKEN SCANNER FUNCTION
+    async function fetchWhales() {
+      const container = document.getElementById('whale-list');
+      try {
+        const res = await fetch('/api/whales/activity');
+        const result = await res.json();
+        if (!result.success || !result.data || result.data.length === 0) return;
+
+        container.innerHTML = result.data.map(w => {
+          const typeColor = w.type === 'BUY' ? 'text-emerald-400 bg-emerald-950 border-emerald-800' : 'text-rose-400 bg-rose-950 border-rose-800';
+          return `
+            <div class="bg-slate-950 p-2.5 rounded border border-slate-800/80 flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold border ${typeColor}">[${w.type}]</span>
+                <span class="font-bold text-slate-200">${w.name} (${w.symbol})</span>
+              </div>
+              <div class="text-right">
+                <span class="font-mono font-bold text-slate-100">$${w.amountUsd.toLocaleString()}</span>
+                <div class="text-[9px] text-slate-500">${w.time}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (e) { console.error(e); }
+    }
+
     async function scanTokens() {
       const container = document.getElementById('token-list');
       const badge = document.getElementById('token-count-badge');
@@ -146,11 +180,15 @@
           return;
         }
 
-        badge.innerText = `${result.data.length} Tokens Found`;
+        badge.innerText = `${result.data.length} Tokens Loaded`;
         container.innerHTML = result.data.map(t => {
           const changeColor = t.priceChange24h >= 0 ? 'text-emerald-400' : 'text-rose-400';
           const changeSign = t.priceChange24h >= 0 ? '+' : '';
           
+          let safetyBadgeClass = 'bg-emerald-950 text-emerald-400 border-emerald-800';
+          if (t.safetyColor === 'rose') safetyBadgeClass = 'bg-rose-950 text-rose-400 border-rose-800';
+          if (t.safetyColor === 'amber') safetyBadgeClass = 'bg-amber-950 text-amber-400 border-amber-800';
+
           return `
             <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex justify-between items-center hover:border-slate-700 transition">
               <div class="space-y-1">
@@ -158,10 +196,13 @@
                   <span>${t.name}</span>
                   <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">${t.symbol}</span>
                 </div>
-                <div class="text-[10px] text-slate-400 flex gap-2">
+                <div class="text-[10px] text-slate-400 flex flex-wrap gap-2">
                   <span>Liq: <strong class="text-slate-300">$${t.liquidityUsd.toLocaleString()}</strong></span>
                   <span>Vol 24h: <strong class="text-slate-300">$${t.volume24h.toLocaleString()}</strong></span>
                   <span>Umur: <strong class="text-slate-300">${t.ageHours}h</strong></span>
+                </div>
+                <div class="pt-0.5">
+                  <span class="text-[9px] px-1.5 py-0.5 rounded font-bold border ${safetyBadgeClass}">${t.safetyStatus}</span>
                 </div>
               </div>
 
@@ -216,8 +257,11 @@
 
     checkHealth();
     scanTokens();
+    fetchWhales();
     setInterval(checkHealth, 30000);
-    setInterval(scanTokens, 15000); // Auto scan setiap 15 detik
+    setInterval(scanTokens, 15000);
+    setInterval(fetchWhales, 10000); // Whale update tiap 10 detik
   </script>
 </body>
-</html>
+  </html>
+        
