@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solana Trading Bot Terminal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 p-4 font-sans">
+  <div class="max-w-xl mx-auto space-y-6">
+    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+      <h1 class="text-xl font-bold text-emerald-400">⚡ Solana Bot Terminal</h1>
+      <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-1 rounded-full">● Live</span>
+    </div>
+
+    <div>
+      <h2 class="text-md font-semibold text-slate-300 mb-3">🔍 Live Token Scanner</h2>
+      <div id="scanner-list" class="space-y-3">
+        <p class="text-xs text-slate-500">Memuat data token...</p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-md font-semibold text-slate-300 mb-3">🐋 Live Whale Activity</h2>
+      <div id="whale-list" class="space-y-2">
+        <p class="text-xs text-slate-500">Memuat aktivitas paus...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadScanner() {
+      try {
+        const res = await fetch('/api/tokens/scan?minLiquidity=1000&minVolume=3000');
+        const json = await res.json();
+        const container = document.getElementById('scanner-list');
+        
+        if (!json.data || json.data.length === 0) {
+          container.innerHTML = '<p class="text-xs text-slate-500">Tidak ada token sesuai kriteria.</p>';
+          return;
+        }
+
+        container.innerHTML = json.data.slice(0, 5).map(t => `
+          <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
+            <div>
+              <div class="font-bold text-sm text-white">${t.name} <span class="text-xs text-slate-400">(${t.symbol})</span></div>
+              <div class="text-xs text-slate-400">Vol: $${t.volume24h.toLocaleString()} | Liq: $${t.liquidityUsd.toLocaleString()}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-semibold">${t.priceUsd < 0.01 ? '$' + t.priceUsd.toFixed(6) : '$' + t.priceUsd.toFixed(4)}</div>
+              <div class="text-xs ${t.priceChange24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${t.priceChange24h >= 0 ? '+' : ''}${t.priceChange24h.toFixed(1)}%</div>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadWhales() {
+      try {
+        const res = await fetch('/api/whales');
+        const json = await res.json();
+        const container = document.getElementById('whale-list');
+
+        if (!json.data || json.data.length === 0) {
+          container.innerHTML = '<p class="text-xs text-slate-500">Belum ada aktivitas paus.</p>';
+          return;
+        }
+
+        container.innerHTML = json.data.slice(0, 5).map(w => `
+          <div class="bg-slate-800/60 p-2.5 rounded border border-slate-700/50 flex justify-between items-center text-xs">
+            <div>
+              <span class="font-bold ${w.type === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}">[${w.type}]</span>
+              <span class="text-slate-200 ml-1">${w.token}</span>
+            </div>
+            <div class="font-semibold text-slate-300">$${w.amountUsd.toLocaleString()}</div>
+          </div>
+        `).join('');
+      } catch (e) { console.error(e); }
+    }
+
+    loadScanner();
+    loadWhales();
+    setInterval(loadScanner, 10000);
+    setInterval(loadWhales, 15000);
+  </script>
+</body>
+</html>
