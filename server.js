@@ -49,21 +49,46 @@ app.get('/api/health/dexscreener', async (req, res) => {
   }
 });
 
-// PHASE 2: REAL TOKEN SCANNER (Bebas Nama, Fokus Solana Chain & Volume/Trend)
+// PHASE 2: DIVERSE SOLANA TOKEN SCANNER (Variasi Koin Aktif)
 app.get('/api/tokens/scan', async (req, res) => {
   try {
-    // Narik data dari token-token Solana yang sedang banyak dicari/trending
-    const response = await fetch('https://api.dexscreener.com/latest/dex/search?q=sol');
-    const data = await response.json();
+    // Tarik daftar token profil/boosted terbaru dari DexScreener
+    const response = await fetch('https://api.dexscreener.com/token-profiles/latest/v1');
+    const profiles = await response.json();
 
-    if (!data.pairs) return res.json({ success: true, count: 0, data: [] });
+    if (!Array.isArray(profiles)) {
+      return res.json({ success: true, count: 0, data: [] });
+    }
 
-    const tokens = data.pairs
-      .filter(pair => pair.chainId === 'solana' && pair.baseToken && pair.liquidity?.usd >= 1000)
-      .map(pair => {
+    // Ambil token yang khusus di jaringan Solana
+    const solanaTokens = profiles
+      .filter(p => p.chainId === 'solana' && p.tokenAddress)
+      .slice(0, 15);
+
+    if (solanaTokens.length === 0) {
+      return res.json({ success: true, count: 0, data: [] });
+    }
+
+    // Ambil detail harga & likuiditas untuk address token yang didapat
+    const addresses = solanaTokens.map(t => t.tokenAddress).join(',');
+    const pairResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addresses}`);
+    const pairData = await pairResponse.json();
+
+    if (!pairData.pairs) return res.json({ success: true, count: 0, data: [] });
+
+    // Deduplikasi token (ambil pair terbaik dengan likuiditas terbesar per token)
+    const tokenMap = new Map();
+
+    pairData.pairs.forEach(pair => {
+      if (pair.chainId === 'solana' && pair.baseToken) {
+        const symbol = pair.baseToken.symbol;
+        // Skip jika itu token SOL murni
+        if (symbol === 'SOL' || symbol === 'WSOL') return;
+
         const createdAt = pair.pairCreatedAt ? new Date(pair.pairCreatedAt) : new Date();
         const ageHours = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60)));
-        return {
+
+        const item = {
           id: pair.pairAddress,
           name: pair.baseToken.name || 'Unknown',
           symbol: pair.baseToken.symbol || '???',
@@ -75,9 +100,14 @@ app.get('/api/tokens/scan', async (req, res) => {
           ageHours: ageHours,
           dexUrl: pair.url
         };
-      })
-      // Hapus filter nama, urutkan berdasarkan volume tertinggi
-      .sort((a, b) => b.volume24h - a.volume24h);
+
+        if (!tokenMap.has(pair.baseToken.address) || tokenMap.get(pair.baseToken.address).liquidityUsd < item.liquidityUsd) {
+          tokenMap.set(pair.baseToken.address, item);
+        }
+      }
+    });
+
+    const tokens = Array.from(tokenMap.values()).sort((a, b) => b.volume24h - a.volume24h);
 
     return res.json({ success: true, count: tokens.length, data: tokens });
   } catch (err) {
@@ -85,8 +115,8 @@ app.get('/api/tokens/scan', async (req, res) => {
   }
 });
 
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Solana WIN Network Engine running on port ${PORT}`);
 });
+  
