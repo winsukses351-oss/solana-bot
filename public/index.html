@@ -3,85 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Solana Trading Bot Terminal</title>
+  <title>Solana Bot — Core Infrastructure</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 p-4 font-sans">
+<body class="bg-slate-950 text-slate-100 p-4 font-sans">
   <div class="max-w-xl mx-auto space-y-6">
-    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-      <h1 class="text-xl font-bold text-emerald-400">⚡ Solana Bot Terminal</h1>
-      <span class="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-1 rounded-full">● Live</span>
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+      <div>
+        <h1 class="text-xl font-bold text-emerald-400">⚡ Solana Bot Infrastructure</h1>
+        <p class="text-xs text-slate-400">Phase 1: Real Health Check & Wallet Adapter</p>
+      </div>
+      <button id="connect-wallet-btn" onclick="toggleWallet()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition">
+        Connect Wallet
+      </button>
     </div>
 
-    <div>
-      <h2 class="text-md font-semibold text-slate-300 mb-3">🔍 Live Token Scanner</h2>
-      <div id="scanner-list" class="space-y-3">
-        <p class="text-xs text-slate-500">Memuat data token...</p>
+    <!-- Panel Status Wallet -->
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+      <h2 class="text-xs font-semibold uppercase text-slate-400">Wallet Connection</h2>
+      <div class="flex justify-between items-center text-sm">
+        <span class="text-slate-300">Status:</span>
+        <span id="wallet-status" class="font-bold text-rose-500">DISCONNECTED</span>
+      </div>
+      <div class="flex justify-between items-center text-xs text-slate-400">
+        <span>Address:</span>
+        <span id="wallet-address" class="font-mono text-slate-200">-</span>
+      </div>
+      <div class="flex justify-between items-center text-xs text-slate-400">
+        <span>SOL Balance:</span>
+        <span id="wallet-balance" class="font-semibold text-emerald-400">0 SOL</span>
       </div>
     </div>
 
-    <div>
-      <h2 class="text-md font-semibold text-slate-300 mb-3">🐋 Live Whale Activity</h2>
-      <div id="whale-list" class="space-y-2">
-        <p class="text-xs text-slate-500">Memuat aktivitas paus...</p>
+    <!-- Health Check System Panel (Real-Time) -->
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xs font-semibold uppercase text-slate-400">System Health Check</h2>
+        <button onclick="checkHealth()" class="text-xs text-emerald-400 hover:underline">🔄 Refresh Status</button>
+      </div>
+      
+      <div class="space-y-2 text-xs">
+        <!-- Solana RPC Status -->
+        <div class="bg-slate-950 p-2.5 rounded border border-slate-800 flex justify-between items-center">
+          <div>
+            <div class="font-semibold">Solana RPC Mainnet</div>
+            <div id="rpc-latency" class="text-[10px] text-slate-500">Latency: --</div>
+          </div>
+          <span id="rpc-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">CHECKING...</span>
+        </div>
+
+        <!-- DexScreener API Status -->
+        <div class="bg-slate-950 p-2.5 rounded border border-slate-800 flex justify-between items-center">
+          <div>
+            <div class="font-semibold">DexScreener API</div>
+            <div id="dex-latency" class="text-[10px] text-slate-500">Latency: --</div>
+          </div>
+          <span id="dex-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">CHECKING...</span>
+        </div>
       </div>
     </div>
+
   </div>
 
   <script>
-    async function loadScanner() {
+    let walletPublicKey = null;
+
+    // REAL-TIME HEALTH CHECK
+    async function checkHealth() {
+      // 1. RPC Check
       try {
-        const res = await fetch('/api/tokens/scan?minLiquidity=1000&minVolume=3000');
-        const json = await res.json();
-        const container = document.getElementById('scanner-list');
+        const resRpc = await fetch('/api/health/rpc');
+        const dataRpc = await resRpc.json();
+        const rpcBadge = document.getElementById('rpc-status');
+        document.getElementById('rpc-latency').innerText = `Latency: ${dataRpc.latency || '--'}`;
         
-        if (!json.data || json.data.length === 0) {
-          container.innerHTML = '<p class="text-xs text-slate-500">Tidak ada token sesuai kriteria.</p>';
-          return;
+        if (dataRpc.status === 'CONNECTED') {
+          rpcBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800';
+          rpcBadge.innerText = 'CONNECTED';
+        } else {
+          rpcBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800';
+          rpcBadge.innerText = 'DISCONNECTED';
         }
-
-        container.innerHTML = json.data.slice(0, 5).map(t => `
-          <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
-            <div>
-              <div class="font-bold text-sm text-white">${t.name} <span class="text-xs text-slate-400">(${t.symbol})</span></div>
-              <div class="text-xs text-slate-400">Vol: $${t.volume24h.toLocaleString()} | Liq: $${t.liquidityUsd.toLocaleString()}</div>
-            </div>
-            <div class="text-right">
-              <div class="text-sm font-semibold">${t.priceUsd < 0.01 ? '$' + t.priceUsd.toFixed(6) : '$' + t.priceUsd.toFixed(4)}</div>
-              <div class="text-xs ${t.priceChange24h >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${t.priceChange24h >= 0 ? '+' : ''}${t.priceChange24h.toFixed(1)}%</div>
-            </div>
-          </div>
-        `).join('');
       } catch (e) { console.error(e); }
-    }
 
-    async function loadWhales() {
+      // 2. DexScreener Check
       try {
-        const res = await fetch('/api/whales');
-        const json = await res.json();
-        const container = document.getElementById('whale-list');
+        const resDex = await fetch('/api/health/dexscreener');
+        const dataDex = await resDex.json();
+        const dexBadge = document.getElementById('dex-status');
+        document.getElementById('dex-latency').innerText = `Latency: ${dataDex.latency || '--'}`;
 
-        if (!json.data || json.data.length === 0) {
-          container.innerHTML = '<p class="text-xs text-slate-500">Belum ada aktivitas paus.</p>';
-          return;
+        if (dataDex.status === 'CONNECTED') {
+          dexBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800';
+          dexBadge.innerText = 'CONNECTED';
+        } else {
+          dexBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800';
+          dexBadge.innerText = 'DISCONNECTED';
         }
-
-        container.innerHTML = json.data.slice(0, 5).map(w => `
-          <div class="bg-slate-800/60 p-2.5 rounded border border-slate-700/50 flex justify-between items-center text-xs">
-            <div>
-              <span class="font-bold ${w.type === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}">[${w.type}]</span>
-              <span class="text-slate-200 ml-1">${w.token}</span>
-            </div>
-            <div class="font-semibold text-slate-300">$${w.amountUsd.toLocaleString()}</div>
-          </div>
-        `).join('');
       } catch (e) { console.error(e); }
     }
 
-    loadScanner();
-    loadWhales();
-    setInterval(loadScanner, 10000);
-    setInterval(loadWhales, 15000);
+    // WALLET ADAPTER ASLI (Phantom/Solflare)
+    async function toggleWallet() {
+      const provider = window?.solana;
+      if (!provider || !provider.isPhantom) {
+        alert('Phantom Wallet tidak terdeteksi di browser HP kamu! Silakan install atau buka via Phantom Browser.');
+        return;
+      }
+
+      try {
+        if (!walletPublicKey) {
+          const resp = await provider.connect();
+          walletPublicKey = resp.publicKey.toString();
+          document.getElementById('wallet-status').innerText = 'CONNECTED';
+          document.getElementById('wallet-status').className = 'font-bold text-emerald-400';
+          document.getElementById('wallet-address').innerText = walletPublicKey.slice(0,6) + '...' + walletPublicKey.slice(-4);
+          document.getElementById('connect-wallet-btn').innerText = 'Disconnect';
+          
+          // Get Balance Real
+          const connection = new solanaWeb3.Connection('https://api.mainnet-beta.solana.com');
+          const balance = await connection.getBalance(resp.publicKey);
+          document.getElementById('wallet-balance').innerText = `${(balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(4)} SOL`;
+        } else {
+          await provider.disconnect();
+          walletPublicKey = null;
+          document.getElementById('wallet-status').innerText = 'DISCONNECTED';
+          document.getElementById('wallet-status').className = 'font-bold text-rose-500';
+          document.getElementById('wallet-address').innerText = '-';
+          document.getElementById('wallet-balance').innerText = '0 SOL';
+          document.getElementById('connect-wallet-btn').innerText = 'Connect Wallet';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Auto Check Health saat pertama buka
+    checkHealth();
+    setInterval(checkHealth, 30000); // Auto ping setiap 30 detik
   </script>
 </body>
-</html>
+  </html>
+  
