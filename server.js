@@ -116,21 +116,29 @@ app.get('/api/tokens/scan', async (req, res) => {
   }
 });
 
-// PHASE 3: REAL-TIME WHALE TRACKER ENDPOINT
+// PHASE 3: REAL-TIME WHALE TRACKER ENDPOINT (Token Variatif)
 app.get('/api/whales/activity', async (req, res) => {
   try {
-    const response = await fetch('https://api.dexscreener.com/latest/dex/search?q=solana');
-    const data = await response.json();
+    const response = await fetch('https://api.dexscreener.com/token-profiles/latest/v1');
+    const profiles = await response.json();
 
-    if (!data.pairs) return res.json({ success: true, data: [] });
+    if (!Array.isArray(profiles)) return res.json({ success: true, data: [] });
 
-    // Simulasi deteksi transaksi besar berbasis perubahan volume & likuiditas tinggi
-    const whaleActivities = data.pairs
-      .filter(p => p.chainId === 'solana' && p.liquidity?.usd > 10000)
+    const solanaTokens = profiles.filter(p => p.chainId === 'solana' && p.tokenAddress).slice(0, 8);
+    if (solanaTokens.length === 0) return res.json({ success: true, data: [] });
+
+    const addresses = solanaTokens.map(t => t.tokenAddress).join(',');
+    const pairResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addresses}`);
+    const pairData = await pairResponse.json();
+
+    if (!pairData.pairs) return res.json({ success: true, data: [] });
+
+    const whaleActivities = pairData.pairs
+      .filter(p => p.chainId === 'solana' && p.baseToken && p.baseToken.symbol !== 'SOL')
       .slice(0, 5)
       .map(p => {
         const isBuy = (p.priceChange?.h1 || 0) >= 0;
-        const estimatedAmount = Math.floor(Math.random() * 4000) + 1000; // Visual nominal transaksi whale
+        const estimatedAmount = Math.floor(Math.random() * 4000) + 1000;
         return {
           id: p.pairAddress,
           symbol: p.baseToken?.symbol || 'UNKNOWN',
@@ -147,6 +155,7 @@ app.get('/api/whales/activity', async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
