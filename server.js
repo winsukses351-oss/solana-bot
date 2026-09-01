@@ -16,9 +16,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// PHASE 1: REAL HEALTH CHECK ENDPOINTS
-
-// 1. Tes Koneksi Solana RPC (Primary Mainnet)
+// PHASE 1: HEALTH CHECK ENDPOINTS
 app.get('/api/health/rpc', async (req, res) => {
   const startTime = Date.now();
   try {
@@ -43,7 +41,6 @@ app.get('/api/health/rpc', async (req, res) => {
   }
 });
 
-// 2. Tes Koneksi DexScreener API
 app.get('/api/health/dexscreener', async (req, res) => {
   const startTime = Date.now();
   try {
@@ -59,8 +56,45 @@ app.get('/api/health/dexscreener', async (req, res) => {
   }
 });
 
+// PHASE 2: REAL TOKEN SCANNER ENDPOINT
+app.get('/api/tokens/scan', async (req, res) => {
+  try {
+    const minLiquidity = Number(req.query.minLiquidity) || 1000;
+    const minVolume = Number(req.query.minVolume) || 2000;
+
+    const response = await fetch('https://api.dexscreener.com/latest/dex/search?q=solana');
+    const data = await response.json();
+
+    if (!data.pairs) return res.json({ success: true, count: 0, data: [] });
+
+    const tokens = data.pairs
+      .filter(pair => pair.chainId === 'solana' && pair.baseToken)
+      .map(pair => {
+        const createdAt = pair.pairCreatedAt ? new Date(pair.pairCreatedAt) : new Date();
+        const ageHours = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60)));
+        return {
+          id: pair.pairAddress,
+          name: pair.baseToken.name || 'Unknown Token',
+          symbol: pair.baseToken.symbol || '???',
+          address: pair.baseToken.address,
+          priceUsd: parseFloat(pair.priceUsd || 0),
+          priceChange24h: pair.priceChange?.h24 || 0,
+          volume24h: pair.volume?.h24 || 0,
+          liquidityUsd: pair.liquidity?.usd || 0,
+          ageHours: ageHours,
+          dexUrl: pair.url
+        };
+      })
+      .filter(t => t.liquidityUsd >= minLiquidity && t.volume24h >= minVolume)
+      .sort((a, b) => b.volume24h - a.volume24h);
+
+    return res.json({ success: true, count: tokens.length, data: tokens });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Core Engine running on port ${PORT}`);
+  console.log(`🚀 Solana WIN Network Engine running on port ${PORT}`);
 });
-        
