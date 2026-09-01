@@ -7,23 +7,26 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 p-4 font-sans">
-  <div class="max-w-xl mx-auto space-y-6">
+<body class="bg-slate-950 text-slate-100 p-4 font-sans flex flex-col min-h-screen justify-between">
+  
+  <div class="max-w-xl mx-auto space-y-6 w-full">
     
-    <!-- Header -->
-    <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+    <!-- Header Rapi & Proporsional -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-3">
       <div>
-        <h1 class="text-xl font-bold text-emerald-400">⚡ Solana Bot Infrastructure</h1>
-        <p class="text-xs text-slate-400">Phase 1: Real Health Check & Wallet Adapter</p>
+        <h1 class="text-xl font-bold text-emerald-400 flex items-center gap-2">
+          ⚡ Solana Bot Terminal
+        </h1>
+        <p class="text-xs text-slate-400">Phase 1: Core Infrastructure Check</p>
       </div>
-      <button id="connect-wallet-btn" onclick="toggleWallet()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition">
+      <button id="connect-wallet-btn" onclick="toggleWallet()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition self-end sm:self-auto shadow-lg shadow-emerald-950">
         Connect Wallet
       </button>
     </div>
 
     <!-- Panel Status Wallet -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
-      <h2 class="text-xs font-semibold uppercase text-slate-400">Wallet Connection</h2>
+    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2.5">
+      <h2 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Wallet Connection</h2>
       <div class="flex justify-between items-center text-sm">
         <span class="text-slate-300">Status:</span>
         <span id="wallet-status" class="font-bold text-rose-500">DISCONNECTED</span>
@@ -41,24 +44,26 @@
     <!-- Health Check System Panel (Real-Time) -->
     <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
       <div class="flex justify-between items-center">
-        <h2 class="text-xs font-semibold uppercase text-slate-400">System Health Check</h2>
-        <button onclick="checkHealth()" class="text-xs text-emerald-400 hover:underline">🔄 Refresh Status</button>
+        <h2 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">System Health Check</h2>
+        <button onclick="checkHealth()" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
+          🔄 Refresh Status
+        </button>
       </div>
       
       <div class="space-y-2 text-xs">
         <!-- Solana RPC Status -->
-        <div class="bg-slate-950 p-2.5 rounded border border-slate-800 flex justify-between items-center">
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80 flex justify-between items-center">
           <div>
-            <div class="font-semibold">Solana RPC Mainnet</div>
+            <div class="font-semibold text-slate-200">Solana RPC Mainnet</div>
             <div id="rpc-latency" class="text-[10px] text-slate-500">Latency: --</div>
           </div>
           <span id="rpc-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">CHECKING...</span>
         </div>
 
         <!-- DexScreener API Status -->
-        <div class="bg-slate-950 p-2.5 rounded border border-slate-800 flex justify-between items-center">
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80 flex justify-between items-center">
           <div>
-            <div class="font-semibold">DexScreener API</div>
+            <div class="font-semibold text-slate-200">DexScreener API</div>
             <div id="dex-latency" class="text-[10px] text-slate-500">Latency: --</div>
           </div>
           <span id="dex-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">CHECKING...</span>
@@ -68,10 +73,16 @@
 
   </div>
 
+  <!-- Footer Branding -->
+  <footer class="mt-8 text-center border-t border-slate-800/60 pt-4 pb-2">
+    <p class="text-xs text-slate-500 font-medium">
+      Powered by <span class="text-emerald-400 font-bold">Erwin Irawan</span> • <span class="text-slate-400">$WINNER Engine</span>
+    </p>
+  </footer>
+
   <script>
     let walletPublicKey = null;
 
-    // REAL-TIME HEALTH CHECK
     async function checkHealth() {
       // 1. RPC Check
       try {
@@ -106,11 +117,10 @@
       } catch (e) { console.error(e); }
     }
 
-    // WALLET ADAPTER ASLI (Phantom/Solflare)
     async function toggleWallet() {
       const provider = window?.solana;
       if (!provider || !provider.isPhantom) {
-        alert('Phantom Wallet tidak terdeteksi di browser HP kamu! Silakan install atau buka via Phantom Browser.');
+        alert('Phantom Wallet tidak terdeteksi! Silakan buka web ini melalui browser Phantom di HP kamu.');
         return;
       }
 
@@ -123,7 +133,6 @@
           document.getElementById('wallet-address').innerText = walletPublicKey.slice(0,6) + '...' + walletPublicKey.slice(-4);
           document.getElementById('connect-wallet-btn').innerText = 'Disconnect';
           
-          // Get Balance Real
           const connection = new solanaWeb3.Connection('https://api.mainnet-beta.solana.com');
           const balance = await connection.getBalance(resp.publicKey);
           document.getElementById('wallet-balance').innerText = `${(balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(4)} SOL`;
@@ -141,10 +150,9 @@
       }
     }
 
-    // Auto Check Health saat pertama buka
     checkHealth();
-    setInterval(checkHealth, 30000); // Auto ping setiap 30 detik
+    setInterval(checkHealth, 30000);
   </script>
 </body>
   </html>
-  
+        
