@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SolHunter AI — Solana Trading Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
   <style>
     ::-webkit-scrollbar { width: 3px; height: 3px; }
     ::-webkit-scrollbar-track { background: #07090e; }
@@ -127,7 +126,7 @@
       </div>
     </section>
 
-    <!-- BALANCE HISTORY GRAPH -->
+    <!-- BALANCE HISTORY GRAPH (PURE SVG - NO DEPENDENCY) -->
     <section class="bg-[#0d121f] rounded-xl border border-slate-800/80 p-3 shadow space-y-2">
       <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
         <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
@@ -135,8 +134,10 @@
         </h2>
         <span class="text-[9px] text-emerald-400 font-mono">REAL-TIME EQUITY</span>
       </div>
-      <div class="h-32 w-full relative">
-        <canvas id="balanceChart"></canvas>
+      <div class="h-28 w-full flex items-center justify-center bg-[#07090e] rounded-lg p-2 border border-slate-800/50">
+        <svg id="svgChart" class="w-full h-full" viewBox="0 0 300 80" preserveAspectRatio="none">
+          <polyline id="chartPolyline" fill="none" stroke="#10b981" stroke-width="2" points="0,40 300,40" />
+        </svg>
       </div>
     </section>
 
@@ -169,7 +170,6 @@
         </div>
 
         <div id="opportunity-list" class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-          <!-- Item diinjeksi JS -->
         </div>
       </section>
 
@@ -210,43 +210,27 @@
     var gasFee = 0.10;
 
     var sampleTokens = ["MOONCAT", "LUNKY", "BONKINU", "PEPE2", "SOLCAT", "PEPESOL", "BONKDOG", "WHALER", "NEOSOL", "AIINU"];
-    var balanceChart = null;
+    var historyPoints = [10.00];
 
-    // INITIALIZE CHART SAFELY
-    function initChart() {
-      if (typeof Chart === 'undefined') return;
-      var canvas = document.getElementById('balanceChart');
-      if (!canvas) return;
+    function updateSvgChart() {
+      var polyline = document.getElementById('chartPolyline');
+      if (!polyline) return;
       
-      var chartCtx = canvas.getContext('2d');
-      balanceChart = new Chart(chartCtx, {
-        type: 'line',
-        data: {
-          labels: ['Init'],
-          datasets: [{
-            label: 'Balance ($)',
-            data: [10.00],
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.08)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.3,
-            pointRadius: 1.5
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { display: false },
-            y: {
-              grid: { color: 'rgba(30, 41, 59, 0.4)' },
-              ticks: { color: '#64748b', font: { size: 9 } }
-            }
-          }
-        }
-      });
+      var width = 300;
+      var height = 80;
+      var maxVal = Math.max.apply(null, historyPoints) + 0.5;
+      var minVal = Math.min.apply(null, historyPoints) - 0.5;
+      if (maxVal === minVal) { maxVal += 1; minVal -= 1; }
+
+      var pointsString = "";
+      var step = width / Math.max(1, historyPoints.length - 1);
+
+      for (var i = 0; i < historyPoints.length; i++) {
+        var x = i * step;
+        var y = height - ((historyPoints[i] - minVal) / (maxVal - minVal)) * (height - 10) - 5;
+        pointsString += x.toFixed(1) + "," + y.toFixed(1) + " ";
+      }
+      polyline.setAttribute("points", pointsString.trim());
     }
 
     function getTimeString() {
@@ -376,16 +360,9 @@
         netProfitUSD >= 0 ? 'text-emerald-300' : 'text-rose-300'
       );
 
-      // UPDATE CHART SAFELY
-      if (balanceChart) {
-        balanceChart.data.labels.push(getTimeString());
-        balanceChart.data.datasets[0].data.push(balance.toFixed(4));
-        if (balanceChart.data.labels.length > 15) {
-          balanceChart.data.labels.shift();
-          balanceChart.data.datasets[0].data.shift();
-        }
-        balanceChart.update();
-      }
+      historyPoints.push(balance);
+      if (historyPoints.length > 20) historyPoints.shift();
+      updateSvgChart();
 
       openPositions.splice(index, 1);
       renderPositions();
@@ -428,4 +405,8 @@
         totalUnrealized += openPositions[k].pnlUSD;
       }
       var unrealizedElem = document.getElementById('stat-unrealized');
-      unrealizedElem
+      unrealizedElem.innerText = (totalUnrealized >= 0 ? '+' : '') + '$' + totalUnrealized.toFixed(4);
+      unrealizedElem.className = "font-mono font-bold text-sm mt-0.5 " + (totalUnrealized >= 0 ? "text-emerald-400" : "text-rose-400");
+
+      var realPnlElem = document.getElementById('stat-realized');
+      realPnlElem.innerText = (netRealizedPnL >= 0 ? '+' : '') + '$' + netRealizedPnL
