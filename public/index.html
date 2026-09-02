@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Solana WIN Network — Whale & Safety Check</title>
+  <title>Solana WIN Network — Auto Trading Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
 </head>
@@ -17,31 +17,56 @@
         <h1 class="text-xl font-bold text-emerald-400 flex items-center gap-2">
           ⚡ Solana WIN Network
         </h1>
-        <p class="text-xs text-slate-400">Phase 3: Whale Tracker & Safety Check</p>
+        <p class="text-xs text-slate-400">Phase 4: Auto-Trader Engine (Simulator)</p>
       </div>
       <button id="connect-wallet-btn" onclick="toggleWallet()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition self-end sm:self-auto shadow-lg shadow-emerald-950">
         Connect Wallet
       </button>
     </div>
 
-    <!-- Panel Status Wallet -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2.5">
-      <h2 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Wallet Connection</h2>
-      <div class="flex justify-between items-center text-sm">
-        <span class="text-slate-300">Status:</span>
-        <span id="wallet-status" class="font-bold text-rose-500">DISCONNECTED</span>
+    <!-- PHASE 4: AUTOMATED TRADING BOT CONTROL PANEL -->
+    <div class="bg-slate-900 border border-emerald-900/60 p-4 rounded-xl space-y-4 shadow-xl shadow-emerald-950/20">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-xs font-semibold uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
+            🤖 Auto-Trader Simulator Engine
+          </h2>
+          <span class="text-[10px] text-slate-400">TP: +15% | SL: -10% | Max Pos: 3</span>
+        </div>
+        <button id="bot-toggle-btn" onclick="toggleBot()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-1.5 rounded-lg text-xs transition border border-slate-700">
+          START BOT
+        </button>
       </div>
-      <div class="flex justify-between items-center text-xs text-slate-400">
-        <span>Address:</span>
-        <span id="wallet-address" class="font-mono text-slate-200">-</span>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+          <div class="text-slate-400 text-[10px]">Simulated Balance:</div>
+          <div id="bot-balance" class="font-mono font-bold text-emerald-400 text-sm">$1,000.00</div>
+        </div>
+        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+          <div class="text-slate-400 text-[10px]">Active Positions:</div>
+          <div id="bot-positions-count" class="font-mono font-bold text-slate-200 text-sm">0 / 3</div>
+        </div>
       </div>
-      <div class="flex justify-between items-center text-xs text-slate-400">
-        <span>SOL Balance:</span>
-        <span id="wallet-balance" class="font-semibold text-emerald-400">0 SOL</span>
+
+      <!-- Live Active Positions -->
+      <div class="space-y-2">
+        <div class="text-[11px] font-semibold text-slate-400">Posisi Aktif Bot:</div>
+        <div id="bot-positions-list" class="space-y-1.5 text-xs">
+          <div class="text-slate-500 text-center py-2 text-[11px]">Tidak ada posisi aktif. Nyalakan bot untuk memulai auto-trading.</div>
+        </div>
+      </div>
+
+      <!-- Trade History Log -->
+      <div class="space-y-2 pt-2 border-t border-slate-800/80">
+        <div class="text-[11px] font-semibold text-slate-400">Riwayat Eksekusi Bot:</div>
+        <div id="bot-history-list" class="space-y-1 text-xs max-h-32 overflow-y-auto">
+          <div class="text-slate-500 text-center py-2 text-[11px]">Belum ada riwayat transaksi.</div>
+        </div>
       </div>
     </div>
 
-    <!-- Health Check System Panel -->
+    <!-- Health Check Panel -->
     <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
       <div class="flex justify-between items-center">
         <h2 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">System Health Check</h2>
@@ -49,17 +74,15 @@
           🔄 Refresh Status
         </button>
       </div>
-      
       <div class="space-y-2 text-xs">
-        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80 flex justify-between items-center">
+        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
           <div>
             <div class="font-semibold text-slate-200">Solana RPC Mainnet</div>
             <div id="rpc-latency" class="text-[10px] text-slate-500">Latency: --</div>
           </div>
           <span id="rpc-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">CHECKING...</span>
         </div>
-
-        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80 flex justify-between items-center">
+        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
           <div>
             <div class="font-semibold text-slate-200">DexScreener API</div>
             <div id="dex-latency" class="text-[10px] text-slate-500">Latency: --</div>
@@ -69,18 +92,18 @@
       </div>
     </div>
 
-    <!-- PHASE 3: WHALE TRACKER PANEL -->
+    <!-- Whale Tracker Panel -->
     <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-800/80 pb-2">
         <h2 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">🐋 Live Whale Activity</h2>
         <span class="text-[10px] text-slate-500">Auto Refresh</span>
       </div>
-      <div id="whale-list" class="space-y-2 text-xs max-h-48 overflow-y-auto">
+      <div id="whale-list" class="space-y-2 text-xs max-h-40 overflow-y-auto">
         <div class="text-center py-4 text-slate-500">Mendeteksi aktivitas transaksi paus...</div>
       </div>
     </div>
 
-    <!-- PHASE 2 & 3: TOKEN SCANNER WITH SAFETY BADGES -->
+    <!-- Token Scanner -->
     <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-800/80 pb-2">
         <div>
@@ -91,15 +114,14 @@
           🔄 Scan Live
         </button>
       </div>
-
-      <div id="token-list" class="space-y-2 text-xs max-h-96 overflow-y-auto pr-1">
+      <div id="token-list" class="space-y-2 text-xs max-h-80 overflow-y-auto pr-1">
         <div class="text-center py-6 text-slate-500 animate-pulse">Memuat data token...</div>
       </div>
     </div>
 
   </div>
 
-  <!-- Footer Branding -->
+  <!-- Footer -->
   <footer class="mt-8 text-center border-t border-slate-800/60 pt-4 pb-2">
     <p class="text-xs text-slate-500 font-medium">
       Powered by <span class="text-emerald-400 font-bold">Erwin Irawan</span> • <span class="text-slate-400">$WINNER Engine</span>
@@ -115,30 +137,18 @@
         const dataRpc = await resRpc.json();
         const rpcBadge = document.getElementById('rpc-status');
         document.getElementById('rpc-latency').innerText = `Latency: ${dataRpc.latency || '--'}`;
-        
-        if (dataRpc.status === 'CONNECTED') {
-          rpcBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800';
-          rpcBadge.innerText = 'CONNECTED';
-        } else {
-          rpcBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800';
-          rpcBadge.innerText = 'DISCONNECTED';
-        }
-      } catch (e) { console.error(e); }
+        rpcBadge.className = dataRpc.status === 'CONNECTED' ? 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800' : 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800';
+        rpcBadge.innerText = dataRpc.status;
+      } catch (e) {}
 
       try {
         const resDex = await fetch('/api/health/dexscreener');
         const dataDex = await resDex.json();
         const dexBadge = document.getElementById('dex-status');
         document.getElementById('dex-latency').innerText = `Latency: ${dataDex.latency || '--'}`;
-
-        if (dataDex.status === 'CONNECTED') {
-          dexBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800';
-          dexBadge.innerText = 'CONNECTED';
-        } else {
-          dexBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800';
-          dexBadge.innerText = 'DISCONNECTED';
-        }
-      } catch (e) { console.error(e); }
+        dexBadge.className = dataDex.status === 'CONNECTED' ? 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800' : 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800';
+        dexBadge.innerText = dataDex.status;
+      } catch (e) {}
     }
 
     async function fetchWhales() {
@@ -151,7 +161,7 @@
         container.innerHTML = result.data.map(w => {
           const typeColor = w.type === 'BUY' ? 'text-emerald-400 bg-emerald-950 border-emerald-800' : 'text-rose-400 bg-rose-950 border-rose-800';
           return `
-            <div class="bg-slate-950 p-2.5 rounded border border-slate-800/80 flex justify-between items-center">
+            <div class="bg-slate-950 p-2 rounded border border-slate-800/80 flex justify-between items-center">
               <div class="flex items-center gap-2">
                 <span class="px-1.5 py-0.5 rounded text-[9px] font-bold border ${typeColor}">[${w.type}]</span>
                 <span class="font-bold text-slate-200">${w.name} (${w.symbol})</span>
@@ -163,34 +173,27 @@
             </div>
           `;
         }).join('');
-      } catch (e) { console.error(e); }
+      } catch (e) {}
     }
 
     async function scanTokens() {
       const container = document.getElementById('token-list');
       const badge = document.getElementById('token-count-badge');
-      
       try {
         const res = await fetch('/api/tokens/scan');
         const result = await res.json();
-
-        if (!result.success || !result.data || result.data.length === 0) {
-          container.innerHTML = '<div class="text-center py-4 text-slate-500">Tidak ada token yang sesuai kriteria.</div>';
-          badge.innerText = '0 Tokens Loaded';
-          return;
-        }
+        if (!result.success || !result.data || result.data.length === 0) return;
 
         badge.innerText = `${result.data.length} Tokens Loaded`;
         container.innerHTML = result.data.map(t => {
           const changeColor = t.priceChange24h >= 0 ? 'text-emerald-400' : 'text-rose-400';
           const changeSign = t.priceChange24h >= 0 ? '+' : '';
-          
           let safetyBadgeClass = 'bg-emerald-950 text-emerald-400 border-emerald-800';
           if (t.safetyColor === 'rose') safetyBadgeClass = 'bg-rose-950 text-rose-400 border-rose-800';
           if (t.safetyColor === 'amber') safetyBadgeClass = 'bg-amber-950 text-amber-400 border-amber-800';
 
           return `
-            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex justify-between items-center hover:border-slate-700 transition">
+            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
               <div class="space-y-1">
                 <div class="font-bold text-slate-100 flex items-center gap-1.5">
                   <span>${t.name}</span>
@@ -205,7 +208,6 @@
                   <span class="text-[9px] px-1.5 py-0.5 rounded font-bold border ${safetyBadgeClass}">${t.safetyStatus}</span>
                 </div>
               </div>
-
               <div class="text-right space-y-1">
                 <div class="font-mono font-bold text-slate-200">$${t.priceUsd < 0.01 ? t.priceUsd.toFixed(6) : t.priceUsd.toFixed(4)}</div>
                 <div class="text-[10px] font-semibold ${changeColor}">${changeSign}${t.priceChange24h.toFixed(2)}%</div>
@@ -216,52 +218,113 @@
             </div>
           `;
         }).join('');
-      } catch (err) {
-        console.error(err);
-        container.innerHTML = '<div class="text-center py-4 text-rose-400">Gagal mengambil data token.</div>';
-      }
+      } catch (err) {}
+    }
+
+    // PHASE 4 BOT UI HANDLERS
+    async function updateBotUI() {
+      try {
+        const res = await fetch('/api/bot/status');
+        const result = await res.json();
+        if (!result.success) return;
+
+        const data = result.data;
+        const toggleBtn = document.getElementById('bot-toggle-btn');
+        if (data.active) {
+          toggleBtn.innerText = 'STOP BOT';
+          toggleBtn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-lg shadow-rose-950';
+        } else {
+          toggleBtn.innerText = 'START BOT';
+          toggleBtn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-lg shadow-emerald-950';
+        }
+
+        document.getElementById('bot-balance').innerText = `$${data.balanceUsd.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        document.getElementById('bot-positions-count').innerText = `${data.positions.length} / 3`;
+
+        // Render Positions
+        const posContainer = document.getElementById('bot-positions-list');
+        if (data.positions.length === 0) {
+          posContainer.innerHTML = '<div class="text-slate-500 text-center py-2 text-[11px]">Tidak ada posisi aktif.</div>';
+        } else {
+          posContainer.innerHTML = data.positions.map(p => `
+            <div class="bg-slate-950 p-2 rounded border border-emerald-900/50 flex justify-between items-center">
+              <div>
+                <span class="font-bold text-slate-200">${p.symbol}</span>
+                <div class="text-[9px] text-slate-400">Entry: $${p.entryPrice < 0.01 ? p.entryPrice.toFixed(6) : p.entryPrice.toFixed(4)} • ${p.buyTime}</div>
+              </div>
+              <div class="text-right">
+                <span class="font-mono font-bold text-emerald-400">$${p.amountUsd}</span>
+                <div class="text-[9px] text-slate-500">HOLDING</div>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        // Render History
+        const histContainer = document.getElementById('bot-history-list');
+        if (data.history.length === 0) {
+          histContainer.innerHTML = '<div class="text-slate-500 text-center py-2 text-[11px]">Belum ada riwayat transaksi.</div>';
+        } else {
+          histContainer.innerHTML = data.history.map(h => {
+            const isBuy = h.type === 'BUY';
+            const badgeClass = isBuy ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : (parseFloat(h.pnlUsd) >= 0 ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-rose-950 text-rose-400 border-rose-800');
+            return `
+              <div class="bg-slate-950 p-2 rounded border border-slate-800 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-bold border ${badgeClass}">[${h.type}]</span>
+                  <span class="font-bold text-slate-200">${h.symbol}</span>
+                  <span class="text-[9px] text-slate-500">(${h.reason})</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-mono font-bold ${isBuy ? 'text-slate-300' : (parseFloat(h.pnlUsd) >= 0 ? 'text-emerald-400' : 'text-rose-400')}">
+                    ${isBuy ? '$100.00' : (parseFloat(h.pnlUsd) >= 0 ? '+' : '') + '$' + h.pnlUsd}
+                  </span>
+                  <div class="text-[9px] text-slate-500">${h.time}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+      } catch (e) {}
+    }
+
+    async function toggleBot() {
+      try {
+        await fetch('/api/bot/toggle', { method: 'POST' });
+        updateBotUI();
+      } catch (e) {}
     }
 
     async function toggleWallet() {
       const provider = window?.solana;
       if (!provider || !provider.isPhantom) {
-        alert('Phantom Wallet tidak terdeteksi! Silakan buka web ini melalui browser Phantom di HP kamu.');
+        alert('Phantom Wallet tidak terdeteksi!');
         return;
       }
-
       try {
         if (!walletPublicKey) {
           const resp = await provider.connect();
           walletPublicKey = resp.publicKey.toString();
-          document.getElementById('wallet-status').innerText = 'CONNECTED';
-          document.getElementById('wallet-status').className = 'font-bold text-emerald-400';
-          document.getElementById('wallet-address').innerText = walletPublicKey.slice(0,6) + '...' + walletPublicKey.slice(-4);
           document.getElementById('connect-wallet-btn').innerText = 'Disconnect';
-          
-          const connection = new solanaWeb3.Connection('https://api.mainnet-beta.solana.com');
-          const balance = await connection.getBalance(resp.publicKey);
-          document.getElementById('wallet-balance').innerText = `${(balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(4)} SOL`;
         } else {
           await provider.disconnect();
           walletPublicKey = null;
-          document.getElementById('wallet-status').innerText = 'DISCONNECTED';
-          document.getElementById('wallet-status').className = 'font-bold text-rose-500';
-          document.getElementById('wallet-address').innerText = '-';
-          document.getElementById('wallet-balance').innerText = '0 SOL';
           document.getElementById('connect-wallet-btn').innerText = 'Connect Wallet';
         }
-      } catch (err) {
-        console.error(err);
-      }
+      } catch (err) {}
     }
 
     checkHealth();
     scanTokens();
     fetchWhales();
+    updateBotUI();
+
     setInterval(checkHealth, 30000);
-    setInterval(scanTokens, 15000);
-    setInterval(fetchWhales, 10000); // Whale update tiap 10 detik
+    setInterval(scanTokens, 10000);
+    setInterval(fetchWhales, 10000);
+    setInterval(updateBotUI, 3000);
   </script>
 </body>
   </html>
-        
+  
