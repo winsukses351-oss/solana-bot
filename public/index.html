@@ -1,412 +1,484 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SolHunter AI — Solana Trading Engine</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    ::-webkit-scrollbar { width: 3px; height: 3px; }
-    ::-webkit-scrollbar-track { background: #07090e; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-  </style>
-</head>
-<body class="bg-[#07090e] text-slate-300 font-sans antialiased text-xs flex flex-col min-h-screen">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SolHunter AI v4 — Pro Trading Terminal</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-hover: #1f242d;
+  --bd: #30363d;
+  --tx: #c9d1d9;
+  --tx2: #8b949e;
+  --tx3: #6e7681;
+  --green: #3fb950;
+  --green-bg: rgba(63,185,80,0.12);
+  --red: #f85149;
+  --red-bg: rgba(248,81,73,0.12);
+  --amber: #d29922;
+  --amber-bg: rgba(210,153,34,0.12);
+  --blue: #58a6ff;
+  --blue-bg: rgba(88,166,255,0.12);
+  --purple: #bc8cff;
+  --purple-bg: rgba(188,140,255,0.12);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--tx);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-x: hidden;
+}
 
-  <!-- TOP STATUS BAR -->
-  <header class="bg-[#0d121f] border-b border-slate-800/80 px-3 py-2 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 overflow-x-auto whitespace-nowrap text-[11px]">
-      <div class="flex items-center gap-2.5">
-        <span class="flex items-center gap-1.5 font-bold text-slate-100">
-          <span id="live-pulse" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="text-emerald-400 font-extrabold tracking-wide">SolHunter</span>
-          <span class="text-[9px] px-1.5 py-0.2 bg-emerald-950/80 text-emerald-400 rounded border border-emerald-800/60 font-mono">AI 24/7</span>
-        </span>
-        <div class="h-3 w-[1px] bg-slate-800"></div>
-        <div class="flex items-center gap-3 text-slate-400 font-mono text-[10px]">
-          <span>SOL: <strong class="text-slate-200">$140.00</strong></span>
-          <span>GAS: <strong class="text-amber-400">$0.10</strong></span>
-        </div>
+/* Header */
+header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--bd);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; color: #fff; }
+.logo-icon { width: 24px; height: 24px; background: linear-gradient(135deg, var(--green), var(--blue)); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #000; }
+.top-status { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.status-tag { display: flex; align-items: center; gap: 6px; background: var(--green-bg); color: var(--green); border: 1px solid rgba(63,185,80,0.3); padding: 3px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; }
+.status-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%{opacity:1;} 50%{opacity:0.3;} 100%{opacity:1;} }
+
+/* Nav */
+nav {
+  background: var(--panel);
+  border-bottom: 1px solid var(--bd);
+  display: flex;
+  overflow-x: auto;
+  padding: 0 16px;
+  scrollbar-width: none;
+}
+nav::-webkit-scrollbar { display: none; }
+.ni {
+  padding: 10px 14px;
+  color: var(--tx2);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ni:hover { color: var(--tx); }
+.ni.act { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* Ticker */
+.ticker {
+  background: #090d11;
+  border-bottom: 1px solid var(--bd);
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 4px 0;
+  font-size: 11px;
+}
+.tick-inner { display: inline-block; animation: tick 25s linear infinite; }
+@keyframes tick { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+.ti { display: inline-flex; align-items: center; gap: 6px; margin-right: 24px; }
+
+/* Layout */
+.container { padding: 16px; max-width: 1400px; margin: 0 auto; }
+.panel { display: none; }
+.panel.act { display: block; }
+.grid { display: grid; gap: 16px; }
+.g-top { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.g-main { grid-template-columns: 2fr 1fr; }
+@media (max-width: 900px) { .g-main { grid-template-columns: 1fr; } }
+
+/* Cards */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 14px;
+}
+.card-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.card-t { font-size: 13px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px; }
+
+/* Stats */
+.stat-val { font-size: 20px; font-weight: 800; color: #fff; margin: 4px 0; }
+.stat-sub { font-size: 11px; color: var(--tx2); display: flex; align-items: center; gap: 4px; }
+.up { color: var(--green); } .dn { color: var(--red); }
+
+/* Buttons & Inputs */
+.btn {
+  background: #21262d;
+  color: var(--tx);
+  border: 1px solid var(--bd);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover { background: #30363d; color: #fff; }
+.btn-p { background: #238636; border-color: rgba(240,246,252,0.1); color: #fff; }
+.btn-p:hover { background: #2ea043; }
+.btn-d { background: #da3633; border-color: rgba(240,246,252,0.1); color: #fff; }
+.btn-d:hover { background: #b62324; }
+.btn-s { padding: 3px 8px; font-size: 11px; }
+
+input, select {
+  background: #0d1117;
+  border: 1px solid var(--bd);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  width: 100%;
+}
+input:focus, select:focus { border-color: var(--blue); outline: none; }
+
+/* Tables */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+th { color: var(--tx2); font-weight: 600; padding: 8px; border-bottom: 1px solid var(--bd); font-size: 11px; }
+td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+tr:hover { background: rgba(255,255,255,0.02); }
+
+/* Badges */
+.badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.b-ok { background: var(--green-bg); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+.b-warn { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(210,153,34,0.3); }
+.b-err { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
+.b-info { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(88,166,255,0.3); }
+
+/* Custom List */
+.trow { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; }
+.trow:hover { background: var(--panel-hover); }
+.tico { width: 32px; height: 32px; border-radius: 50%; background: #21262d; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; }
+.tn { font-weight: 700; color: #fff; }
+.ts { font-size: 11px; color: var(--tx2); }
+
+/* Progress */
+.pb { margin-top: 6px; }
+.pbh { display: flex; justify-content: space-between; font-size: 11px; color: var(--tx2); margin-bottom: 2px; }
+.pbt { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; }
+.pbf { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+/* Modals */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
+.modal-bg.open { display: flex; }
+.modal { background: var(--panel); border: 1px solid var(--bd); border-radius: 10px; width: 100%; max-width: 480px; overflow: hidden; }
+.modal-h { padding: 12px 16px; border-bottom: 1px solid var(--bd); display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #fff; }
+.modal-b { padding: 16px; max-height: 80vh; overflow-y: auto; }
+.modal-f { padding: 12px 16px; border-top: 1px solid var(--bd); display: flex; justify-content: flex-end; gap: 8px; background: #0d1117; }
+
+/* Toast */
+.toast-wrap { position: fixed; bottom: 16px; right: 16px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: var(--panel); border: 1px solid var(--bd); border-left: 4px solid var(--blue); padding: 10px 14px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); min-width: 240px; font-size: 12px; animation: slideIn 0.2s; }
+.toast.t-ok { border-left-color: var(--green); }
+.toast.t-warn { border-left-color: var(--amber); }
+.toast.t-err { border-left-color: var(--red); }
+@keyframes slideIn { from{transform:translateX(100%);} to{transform:translateX(0);} }
+
+/* Chart Canvas */
+canvas { width: 100% !important; height: 160px !important; }
+.cb-group { display: flex; gap: 4px; }
+.cb { padding: 4px 8px; font-size: 11px; background: #21262d; border: 1px solid var(--bd); border-radius: 4px; color: var(--tx2); cursor: pointer; }
+.cb.sel { background: var(--blue-bg); color: var(--blue); border-color: var(--blue); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">S</div>
+    <span>SolHunter AI <span style="font-size:10px;color:var(--blue);border:1px solid var(--blue);padding:1px 4px;border-radius:4px;margin-left:4px">v4.0 PRO</span></span>
+  </div>
+  <div class="top-status">
+    <div class="status-tag"><div class="status-dot"></div> ENGINE ONLINE</div>
+    <button class="btn btn-s" onclick="openModal('m-settings')">⚙️ Settings</button>
+  </div>
+</header>
+
+<nav>
+  <a class="ni act" id="ni-dash" onclick="nav('dash')">📊 Dashboard</a>
+  <a class="ni" id="ni-opps" onclick="nav('opps')">🎯 Opportunities</a>
+  <a class="ni" id="ni-positions" onclick="nav('positions')">⚡ Active Trades</a>
+  <a class="ni" id="ni-smart" onclick="nav('smart')">🧠 Smart Money</a>
+  <a class="ni" id="ni-whale" onclick="nav('whale')">🐋 Whale Watcher</a>
+  <a class="ni" id="ni-scanner" onclick="nav('scanner')">🔍 Token Scanner</a>
+  <a class="ni" id="ni-analytics" onclick="nav('analytics')">📈 Performance</a>
+</nav>
+
+<div class="ticker">
+  <div class="tick-inner" id="tickInner">
+    <!-- Populated via JS -->
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ================= PANEL: DASHBOARD ================= -->
+  <div class="panel act" id="p-dash">
+    <div class="grid g-top" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-h"><span class="card-t">Total Wallet</span><button class="btn btn-s" onclick="openModal('m-wallet')">Manage</button></div>
+        <div class="stat-val" id="st-bal">$10,000.00</div>
+        <div class="stat-sub"><span id="st-sol">71.42 SOL</span> • <span class="up" id="st-pnl-24h">+$0.00 (0.0%)</span> today</div>
       </div>
-      <div class="flex items-center gap-2 text-[10px]">
-        <span class="text-slate-400 font-mono bg-slate-900/90 px-2 py-0.5 rounded border border-slate-800" id="live-clock">00:00:00</span>
-        <span id="system-status-badge" class="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-bold">ONLINE</span>
+      <div class="card">
+        <div class="card-h"><span class="card-t">Win Rate (24h)</span><span class="badge b-ok" id="st-wr-badge">HIGH</span></div>
+        <div class="stat-val" id="st-wr">0.0%</div>
+        <div class="stat-sub"><span id="st-trades-count">0 trades</span> • <span class="up" id="st-wins">0W</span> / <span class="dn" id="st-losses">0L</span></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-t">AI Confidence</span><span class="badge b-info">ACTIVE</span></div>
+        <div class="stat-val" id="st-conf">88.4%</div>
+        <div class="stat-sub">Model: DeepMemecoin-v4-Pro</div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-t">System Status</span><span class="badge b-ok">STABLE</span></div>
+        <div class="stat-val" style="font-size:14px;margin:8px 0" id="st-status">Auto Trading Active</div>
+        <div class="stat-sub">Uptime: <span id="uptimeTxt">00:00:00</span> • TPS: 2,840</div>
       </div>
     </div>
-  </header>
 
-  <!-- MAIN CONTAINER -->
-  <main class="flex-1 p-3 space-y-3 max-w-7xl mx-auto w-full">
-    
-    <!-- CONTROLS PANEL -->
-    <section class="bg-[#0d121f] p-3 rounded-xl border border-slate-800/80 shadow-lg space-y-2.5">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-center gap-1.5">
-          <button id="bot-toggle-btn" onclick="toggleBotEngine()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] shadow transition active:scale-95">
-            Pause Engine
-          </button>
-          
-          <button onclick="forceScanSignal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] shadow transition active:scale-95 flex items-center gap-1">
-            <span>⚡</span> Scan Now
-          </button>
+    <div class="grid g-main">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <!-- Equity Chart -->
+        <div class="card">
+          <div class="card-h">
+            <span class="card-t">Portfolio Growth (USDT)</span>
+            <div class="cb-group">
+              <div class="cb sel">1D</div><div class="cb">1W</div><div class="cb">1M</div>
+            </div>
+          </div>
+          <canvas id="balCanvas"></canvas>
         </div>
 
-        <div class="flex items-center gap-1.5">
-          <div class="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-[10px] font-mono">
-            <button id="mode-demo-btn" onclick="setMode('DEMO')" class="px-2 py-1 rounded-md bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">DEMO ($10)</button>
-            <button id="mode-live-btn" onclick="setMode('LIVE')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-300">LIVE</button>
+        <!-- Active Trades Preview -->
+        <div class="card">
+          <div class="card-h">
+            <span class="card-t">Active Positions (<span id="pos-count">0</span>)</span>
+            <button class="btn btn-s" onclick="nav('positions')">View All</button>
           </div>
-
-          <button id="kill-switch-btn" onclick="triggerKillSwitch()" class="bg-red-950/60 hover:bg-red-900/80 text-red-400 border border-red-800/60 font-bold px-2 py-1.5 rounded-lg text-[10px] transition">
-            ⚠️ KILL
-          </button>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr><th>TOKEN</th><th>ENTRY</th><th>CURRENT</th><th>SIZE</th><th>PNL</th><th>ACTION</th></tr>
+              </thead>
+              <tbody id="dash-pos-body">
+                <tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:16px">Tidak ada posisi aktif saat ini</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div class="flex items-center justify-between border-t border-slate-800/60 pt-2 font-mono text-[10px]">
-        <span class="text-slate-400 flex items-center gap-1">⚙️ COMPOUND ENGINE:</span>
-        <select id="compound-select" onchange="updateCompound(this.value)" class="bg-slate-900 border border-slate-700 text-amber-400 font-bold rounded-md px-2 py-0.5 text-[11px] focus:outline-none">
-          <option value="0">OFF (0%)</option>
-          <option value="25">25%</option>
-          <option value="50" selected>50%</option>
-          <option value="75">75%</option>
-          <option value="100">100%</option>
+      <!-- Right Column -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card">
+          <div class="card-h"><span class="card-t">Engine Controls</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-p" id="btn-toggle-auto" onclick="toggleAutoTrade()" style="justify-content:center;padding:10px">
+              ⏸️ Pause Auto Trading
+            </button>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button class="btn" onclick="triggerManualScan()" style="justify-content:center">🔍 Force Scan</button>
+              <button class="btn btn-d" onclick="closeAllPositions()" style="justify-content:center">🚨 Emergency Close</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><span class="card-t">Real-time Audit Log</span><button class="btn btn-s" onclick="clearAudit()">Clear</button></div>
+          <div id="auditLog" style="font-family:monospace;font-size:11px;color:var(--tx2);max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:4px">
+            <div>[00:00:00] System booted. Initialized SolHunter v4 core.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PANEL: OPPORTUNITIES ================= -->
+  <div class="panel" id="p-opps">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-h">
+        <span class="card-t">Top AI Detected Opportunities</span>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="oppSearch" placeholder="Filter symbol/address..." style="width:180px" oninput="renderOpps()">
+          <button class="btn btn-s" onclick="triggerManualScan()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div id="oppsContainer" class="grid" style="grid-template-columns:repeat(auto-fill, minmax(320px, 1fr))">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PANEL: POSITIONS ================= -->
+  <div class="panel" id="p-positions">
+    <div class="card">
+      <div class="card-h">
+        <span class="card-t">Active Trading Positions</span>
+        <button class="btn btn-s btn-d" onclick="closeAllPositions()">Close All</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>TOKEN</th><th>SOURCE</th><th>ENTRY PRICE</th><th>CURRENT PRICE</th><th>POSITION SIZE</th><th>UNREALIZED PNL</th><th>AUTO SL/TP</th><th>ACTIONS</th></tr>
+          </thead>
+          <tbody id="full-pos-body">
+            <!-- Rendered via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PANEL: SMART MONEY ================= -->
+  <div class="panel" id="p-smart">
+    <div class="card">
+      <div class="card-h">
+        <span class="card-t">Smart Money Tracker & Copy Trading</span>
+        <button class="btn btn-s btn-p" onclick="openModal('m-add-wallet')">+ Add Wallet</button>
+      </div>
+      <div class="tbl-wrap">
+        <div id="smart-list">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PANEL: WHALE WATCHER ================= -->
+  <div class="panel" id="p-whale">
+    <div class="grid g-main">
+      <div class="card">
+        <div class="card-h"><span class="card-t">Large Transactions (> 100 SOL)</span></div>
+        <div id="wh-list">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-t">Whale Wallet Clusters</span></div>
+        <div id="cluster-list">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PANEL: SCANNER ================= -->
+  <div class="panel" id="p-scanner">
+    <div class="card">
+      <div class="card-h">
+        <span class="card-t">Real-time DEX Token Scanner</span>
+        <select style="width:140px" onchange="renderScanner()">
+          <option value="ALL">All Sources</option>
+          <option value="Pump.fun">Pump.fun</option>
+          <option value="Raydium">Raydium</option>
+          <option value="Meteora">Meteora</option>
         </select>
       </div>
-    </section>
-
-    <!-- METRICS GRID -->
-    <section class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">BALANCE</div>
-        <div id="stat-balance" class="font-mono font-bold text-slate-100 text-sm mt-0.5">$10.0000</div>
-        <div class="text-[8.5px] text-slate-400 mt-0.5">Base $10.00</div>
+      <div id="scanner-list">
+        <!-- Rendered via JS -->
       </div>
-      
-      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">UNREALIZED PNL</div>
-        <div id="stat-unrealized" class="font-mono font-bold text-slate-400 text-sm mt-0.5">$0.0000</div>
-        <div class="text-[8.5px] text-slate-500 mt-0.5">Open Positions</div>
-      </div>
-
-      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">REALIZED PNL</div>
-        <div id="stat-realized" class="font-mono font-bold text-emerald-400 text-sm mt-0.5">+$0.0000</div>
-        <div class="text-[8.5px] text-emerald-500/80 mt-0.5">Closed Trades</div>
-      </div>
-
-      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">WIN RATE</div>
-        <div id="stat-winrate" class="font-mono font-bold text-slate-100 text-sm mt-0.5">0%</div>
-        <div id="stat-winloss" class="text-[8.5px] text-slate-400 mt-0.5">0 W / 0 L</div>
-      </div>
-
-      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">OPEN POSITIONS</div>
-        <div id="stat-open-pos" class="font-mono font-bold text-slate-100 text-sm mt-0.5">0 / 3</div>
-        <div class="text-[8.5px] text-slate-400 mt-0.5">Max $3/Trade</div>
-      </div>
-
-      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">TOTAL TRADES</div>
-        <div id="stat-total-trades" class="font-mono font-bold text-slate-100 text-sm mt-0.5">0</div>
-        <div class="text-[8.5px] text-slate-400 mt-0.5">Executed</div>
-      </div>
-
-      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">PROFIT FACTOR</div>
-        <div id="stat-profit-factor" class="font-mono font-bold text-emerald-400 text-sm mt-0.5">0.00</div>
-        <div class="text-[8.5px] text-slate-400 mt-0.5">Ratio</div>
-      </div>
-
-      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">MAX DRAWDOWN</div>
-        <div id="stat-drawdown" class="font-mono font-bold text-rose-400 text-sm mt-0.5">0.00%</div>
-        <div class="text-[8.5px] text-slate-400 mt-0.5">Risk Guard</div>
-      </div>
-    </section>
-
-    <!-- BALANCE HISTORY GRAPH (PURE SVG - NO DEPENDENCY) -->
-    <section class="bg-[#0d121f] rounded-xl border border-slate-800/80 p-3 shadow space-y-2">
-      <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-        <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
-          <span>📈</span> BALANCE HISTORY
-        </h2>
-        <span class="text-[9px] text-emerald-400 font-mono">REAL-TIME EQUITY</span>
-      </div>
-      <div class="h-28 w-full flex items-center justify-center bg-[#07090e] rounded-lg p-2 border border-slate-800/50">
-        <svg id="svgChart" class="w-full h-full" viewBox="0 0 300 80" preserveAspectRatio="none">
-          <polyline id="chartPolyline" fill="none" stroke="#10b981" stroke-width="2" points="0,40 300,40" />
-        </svg>
-      </div>
-    </section>
-
-    <!-- POSISI AKTIF PANEL -->
-    <section class="bg-[#0d121f] rounded-xl border border-slate-800/80 p-3 shadow space-y-2.5">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/80 pb-2 gap-1">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider">OPEN POSITIONS — LIVE PNL</h2>
-        </div>
-        <span class="text-[9px] text-slate-400 font-mono">Auto Trade $3.00 | TP +15% | SL -10%</span>
-      </div>
-
-      <div id="positions-list" class="space-y-2 min-h-[50px]">
-        <div id="no-pos-msg" class="text-center py-4 text-slate-400 font-mono text-[10px]">Menunggu sinyal Elite (90+) untuk mengeksekusi posisi...</div>
-      </div>
-    </section>
-
-    <!-- SPLIT: OPPORTUNITY & LOGS -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-      
-      <!-- OPPORTUNITIES -->
-      <section class="bg-[#0d121f] rounded-xl border border-slate-800/80 p-3 shadow space-y-2.5">
-        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-          <div>
-            <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider">TOP OPPORTUNITIES</h2>
-            <p class="text-[8.5px] text-slate-400">Pump.fun, Raydium, DexScreener</p>
-          </div>
-          <span class="text-[9px] bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded-full font-mono">MONITORING</span>
-        </div>
-
-        <div id="opportunity-list" class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-        </div>
-      </section>
-
-      <!-- SYSTEM LOGS -->
-      <section class="bg-[#0d121f] rounded-xl border border-slate-800/80 p-3 shadow space-y-2.5">
-        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-          <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider">LIVE FEED & LOGS</h2>
-          <span class="text-[9px] text-emerald-400 font-mono">REAL-TIME</span>
-        </div>
-
-        <div id="feed-logs" class="space-y-1.5 max-h-[220px] overflow-y-auto pr-1 font-mono text-[9.5px]">
-          <div class="p-1.5 bg-[#07090e] rounded-lg border border-slate-800/60 text-slate-400">
-            <span class="text-slate-400">[SYSTEM]</span> SolHunter AI Engine initialized with $10.00 capital.
-          </div>
-        </div>
-      </section>
-
     </div>
+  </div>
 
-  </main>
+  <!-- ================= PANEL: ANALYTICS ================= -->
+  <div class="panel" id="p-analytics">
+    <div class="grid g-top" style="margin-bottom:16px">
+      <div class="card"><div class="stat-sub">Total Trades</div><div class="stat-val" id="an-total">0</div></div>
+      <div class="card"><div class="stat-sub">Net Profit</div><div class="stat-val up" id="an-profit">$0.00</div></div>
+      <div class="card"><div class="stat-sub">Profit Factor</div><div class="stat-val" id="an-pf">1.85</div></div>
+      <div class="card"><div class="stat-sub">Avg Trade PnL</div><div class="stat-val" id="an-avg">$0.00</div></div>
+    </div>
+    <div class="grid g-main">
+      <div class="card">
+        <div class="card-h"><span class="card-t">Score vs Profit Correlation</span></div>
+        <canvas id="corrCanvas"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-h"><span class="card-t">Source Performance Breakdown</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>SOURCE</th><th>TRADES</th><th>WIN %</th><th>NET PNL</th><th>AVG SCORE</th></tr></thead>
+            <tbody id="perf-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <script>
-    var isRunning = true;
-    var currentMode = "DEMO";
-    var compoundRate = 50;
-    var killSwitchActivated = false;
+</div>
 
-    var balance = 10.00;
-    var netRealizedPnL = 0.00;
-    var totalGasPaid = 0.00;
-    var wins = 0;
-    var losses = 0;
-    var grossProfits = 0;
-    var grossLosses = 0;
-    var openPositions = [];
-    var maxPositions = 3;
-    var positionSizeUSD = 3.00;
-    var gasFee = 0.10;
+<!-- ================= MODALS ================= -->
+<!-- Modal Settings -->
+<div class="modal-bg" id="m-settings">
+  <div class="modal">
+    <div class="modal-h"><span>⚙️ Engine Settings</span><button class="btn btn-s" onclick="closeModal('m-settings')">✕</button></div>
+    <div class="modal-b" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:11px;color:var(--tx2)">API Key (Birdeye / Helius / DexScreener)</label>
+        <input type="password" id="cfg-apikey" value="●●●●●●●●●●●●●●●●">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label style="font-size:11px;color:var(--tx2)">Max Trade Size ($)</label>
+          <input type="number" id="cfg-size" value="100">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--tx2)">Max Active Positions</label>
+          <input type="number" id="cfg-maxpos" value="5">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label style="font-size:11px;color:var(--tx2)">Stop Loss (%)</label>
+          <input type="number" id="cfg-sl" value="10">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--tx2)">Take Profit (%)</label>
+          <input type="number" id="cfg-tp" value="30">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--tx2)">Auto-Compound Profit (%)</label>
+        <div class="cb-group" style="margin-top:4px">
+          <div class="cb" onclick="setCmp(this, 0)">Off</div>
+          <div class="cb sel" onclick="setCmp(this, 50)">50%</div>
+          <div class="cb" onclick="setCmp(this, 100)">100%</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-f">
+      <button class="btn" onclick="closeModal('m-settings')">Cancel</button>
+      <button class="btn btn-p" onclick="saveSettings()">Save Configuration</button>
+    </div>
+  </div>
+</div>
 
-    var sampleTokens = ["MOONCAT", "LUNKY", "BONKINU", "PEPE2", "SOLCAT", "PEPESOL", "BONKDOG", "WHALER", "NEOSOL", "AIINU"];
-    var historyPoints = [10.00];
-
-    function updateSvgChart() {
-      var polyline = document.getElementById('chartPolyline');
-      if (!polyline) return;
-      
-      var width = 300;
-      var height = 80;
-      var maxVal = Math.max.apply(null, historyPoints) + 0.5;
-      var minVal = Math.min.apply(null, historyPoints) - 0.5;
-      if (maxVal === minVal) { maxVal += 1; minVal -= 1; }
-
-      var pointsString = "";
-      var step = width / Math.max(1, historyPoints.length - 1);
-
-      for (var i = 0; i < historyPoints.length; i++) {
-        var x = i * step;
-        var y = height - ((historyPoints[i] - minVal) / (maxVal - minVal)) * (height - 10) - 5;
-        pointsString += x.toFixed(1) + "," + y.toFixed(1) + " ";
-      }
-      polyline.setAttribute("points", pointsString.trim());
-    }
-
-    function getTimeString() {
-      var now = new Date();
-      var h = String(now.getHours()).padStart(2, '0');
-      var m = String(now.getMinutes()).padStart(2, '0');
-      var s = String(now.getSeconds()).padStart(2, '0');
-      return h + ':' + m + ':' + s;
-    }
-
-    function addLog(tag, msg, colorClass) {
-      colorClass = colorClass || "text-slate-400";
-      var container = document.getElementById('feed-logs');
-      if (!container) return;
-      var item = document.createElement('div');
-      item.className = "p-1.5 bg-[#07090e] rounded-lg border border-slate-800/60 " + colorClass;
-      item.innerHTML = '<span class="text-slate-500">[' + getTimeString() + ']</span> <span class="font-bold">' + tag + '</span> ' + msg;
-      container.insertBefore(item, container.firstChild);
-    }
-
-    function generateTokenOpportunity(forceHigh) {
-      if (!isRunning || killSwitchActivated) return;
-
-      var symbol = sampleTokens[Math.floor(Math.random() * sampleTokens.length)];
-      var smartMoney = forceHigh ? 95 : (Math.floor(Math.random() * 30) + 70);
-      var whale = forceHigh ? 92 : (Math.floor(Math.random() * 30) + 70);
-      var momentum = forceHigh ? 96 : (Math.floor(Math.random() * 30) + 70);
-      var safety = 100;
-
-      var score = Math.floor((smartMoney * 0.3) + (whale * 0.2) + (momentum * 0.3) + (safety * 0.2));
-      var badge = score >= 90 ? "ELITE" : (score >= 80 ? "HIGH" : "AVOID");
-      var badgeColor = score >= 90 ? "bg-emerald-950/80 text-emerald-400 border-emerald-800/60" : (score >= 80 ? "bg-amber-950/80 text-amber-400 border-amber-800/60" : "bg-rose-950/80 text-rose-400 border-rose-800/60");
-
-      var list = document.getElementById('opportunity-list');
-      if (!list) return;
-
-      var card = document.createElement('div');
-      card.className = "bg-[#07090e] p-2.5 rounded-lg border border-slate-800/80 flex items-center justify-between gap-2 transition hover:border-slate-700";
-      card.innerHTML = 
-        '<div class="space-y-1">' +
-          '<div class="flex items-center gap-2">' +
-            '<span class="font-bold text-slate-100 text-xs font-mono">' + symbol + '</span>' +
-            '<span class="px-1.5 py-0.2 rounded text-[8px] ' + badgeColor + ' border font-bold uppercase">' + badge + ' (' + score + ')</span>' +
-          '</div>' +
-          '<div class="flex gap-2 text-[8.5px] font-mono text-slate-400">' +
-            '<span>SM: ' + smartMoney + '</span>' +
-            '<span>Whale: ' + whale + '</span>' +
-            '<span>Mom: ' + momentum + '</span>' +
-          '</div>' +
-        '</div>' +
-        '<div>' +
-          '<button class="px-2.5 py-1 rounded-md ' + (score >= 90 ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-800/80 text-slate-500') + ' text-[9.5px]">' +
-            (score >= 90 ? 'Auto Ready' : 'Score Low') +
-          '</button>' +
-        '</div>';
-
-      list.insertBefore(card, list.firstChild);
-      if (list.children.length > 5) list.removeChild(list.lastChild);
-
-      if (score >= 90 && openPositions.length < maxPositions && balance >= (positionSizeUSD + gasFee)) {
-        executeAutoBuy(symbol, score);
-      }
-    }
-
-    function forceScanSignal() {
-      generateTokenOpportunity(true);
-    }
-
-    function executeAutoBuy(symbol, score) {
-      totalGasPaid += gasFee;
-      balance -= (positionSizeUSD + gasFee);
-      var entryPrice = (Math.random() * 0.001 + 0.0001).toFixed(6);
-
-      openPositions.push({
-        symbol: symbol,
-        score: score,
-        entryPrice: parseFloat(entryPrice),
-        currentPrice: parseFloat(entryPrice),
-        sizeUSD: positionSizeUSD,
-        pnlPct: 0.0,
-        pnlUSD: 0.0
-      });
-
-      addLog('<span class="text-emerald-400">[AUTO BUY]</span>', 'Beli $' + positionSizeUSD.toFixed(2) + ' ' + symbol + ' @ $' + entryPrice, 'text-emerald-300');
-      updateUI();
-    }
-
-    function updatePositionsEngine() {
-      if (!isRunning || openPositions.length === 0) return;
-
-      for (var i = openPositions.length - 1; i >= 0; i--) {
-        var pos = openPositions[i];
-        var change = (Math.random() * 0.16) - 0.06;
-        pos.currentPrice = parseFloat((pos.currentPrice * (1 + change)).toFixed(6));
-        pos.pnlPct = parseFloat((((pos.currentPrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
-        pos.pnlUSD = parseFloat((pos.sizeUSD * (pos.pnlPct / 100)).toFixed(4));
-
-        if (pos.pnlPct >= 15.0) {
-          closePosition(i, 'TAKE PROFIT (+15%)');
-        } else if (pos.pnlPct <= -10.0) {
-          closePosition(i, 'STOP LOSS (-10%)');
-        }
-      }
-
-      renderPositions();
-      updateUI();
-    }
-
-    function closePosition(index, reason) {
-      var pos = openPositions[index];
-      totalGasPaid += gasFee;
-      var netProfitUSD = pos.pnlUSD - gasFee;
-      balance += (pos.sizeUSD + pos.pnlUSD - gasFee);
-      netRealizedPnL += netProfitUSD;
-
-      if (netProfitUSD > 0) {
-        wins++;
-        grossProfits += netProfitUSD;
-      } else {
-        losses++;
-        grossLosses += Math.abs(netProfitUSD);
-      }
-
-      addLog(
-        netProfitUSD >= 0 ? '<span class="text-emerald-400">[AUTO SELL]</span>' : '<span class="text-rose-400">[AUTO SELL]</span>',
-        'Tutup ' + pos.symbol + ' (' + reason + ') PnL: $' + netProfitUSD.toFixed(4),
-        netProfitUSD >= 0 ? 'text-emerald-300' : 'text-rose-300'
-      );
-
-      historyPoints.push(balance);
-      if (historyPoints.length > 20) historyPoints.shift();
-      updateSvgChart();
-
-      openPositions.splice(index, 1);
-      renderPositions();
-      updateUI();
-    }
-
-    function renderPositions() {
-      var posContainer = document.getElementById('positions-list');
-      if (!posContainer) return;
-
-      if (openPositions.length === 0) {
-        posContainer.innerHTML = '<div class="text-center py-4 text-slate-400 font-mono text-[10px]">Menunggu sinyal Elite (90+) untuk mengeksekusi posisi...</div>';
-        return;
-      }
-
-      posContainer.innerHTML = '';
-      for (var j = 0; j < openPositions.length; j++) {
-        var pos = openPositions[j];
-        var isProfit = pos.pnlPct >= 0;
-        var item = document.createElement('div');
-        item.className = "bg-[#07090e] p-2.5 rounded-lg border border-slate-800 flex justify-between items-center font-mono";
-        item.innerHTML = 
-          '<div>' +
-            '<div class="font-bold text-slate-100 flex items-center gap-1.5">' + pos.symbol + ' <span class="text-[8px] px-1 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">SCORE ' + pos.score + '</span></div>' +
-            '<div class="text-[9.5px] text-slate-400 mt-0.5">Entry: $' + pos.entryPrice + ' | Cur: $' + pos.currentPrice + '</div>' +
-          '</div>' +
-          '<div class="text-right">' +
-            '<div class="font-bold text-xs ' + (isProfit ? 'text-emerald-400' : 'text-rose-400') + '">' + (isProfit ? '+' : '') + pos.pnlPct + '%</div>' +
-            '<div class="text-[8.5px] text-slate-400 mt-0.5">($' + pos.pnlUSD.toFixed(3) + ')</div>' +
-          '</div>';
-        posContainer.appendChild(item);
-      }
-    }
-
-    function updateUI() {
-      document.getElementById('stat-balance').innerText = '$' + balance.toFixed(4);
-      
-      var totalUnrealized = 0.0;
-      for (var k = 0; k < openPositions.length; k++) {
-        totalUnrealized += openPositions[k].pnlUSD;
-      }
-      var unrealizedElem = document.getElementById('stat-unrealized');
-      unrealizedElem.innerText = (totalUnrealized >= 0 ? '+' : '') + '$' + totalUnrealized.toFixed(4);
-      unrealizedElem.className = "font-mono font-bold text-sm mt-0.5 " + (totalUnrealized >= 0 ? "text-emerald-400" : "text-rose-400");
-
-      var realPnlElem = document.getElementById('stat-realized');
-      realPnlElem.innerText = (netRealizedPnL >= 0 ? '+' : '') + '$' + netRealizedPnL
+<!-- Modal Wallet -->
+<div class="modal-bg" id="m-wallet">
+  <div class="modal">
+    <div class="modal-h"><span>💳 Wallet & API Keys</span><button class="btn btn-s" onclick="closeModal('m-wallet')">✕</button></div>
+    <div class="modal-b" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:11px;color:var(--tx2)">Solana 
