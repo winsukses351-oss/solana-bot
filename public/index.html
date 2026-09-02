@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SolHunter AI — Solana Trading Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -44,6 +44,11 @@
         
         <button id="kill-switch-btn" onclick="triggerKillSwitch()" class="bg-red-950 hover:bg-red-900 text-red-400 border border-red-700 font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer">
           ⚠️ EMERGENCY KILL SWITCH
+        </button>
+
+        <!-- MANUAL TRIGGER BUTTON FOR MOBILE TESTING -->
+        <button onclick="forceScanSignal()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer">
+          ⚡ Run Scan Now
         </button>
 
         <div class="flex items-center bg-slate-900 border border-slate-800 rounded p-0.5 text-[10px] font-mono">
@@ -116,8 +121,8 @@
           <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded font-mono">REAL-TIME MONITOR</span>
         </div>
 
-        <div id="opportunity-list" class="space-y-2 min-h-[160px] max-h-80 overflow-y-auto pr-1">
-          <!-- Token cards injected via JS -->
+        <div id="opportunity-list" class="space-y-2 min-h-[140px] max-h-80 overflow-y-auto pr-1">
+          <!-- Item diinjeksi JS -->
         </div>
       </div>
 
@@ -128,7 +133,7 @@
           <span class="text-[9px] text-emerald-400 font-mono">ENGINE 24/7 ACTIVE</span>
         </div>
 
-        <div id="feed-logs" class="space-y-2 min-h-[160px] max-h-80 overflow-y-auto pr-1 font-mono text-[10px]">
+        <div id="feed-logs" class="space-y-2 min-h-[140px] max-h-80 overflow-y-auto pr-1 font-mono text-[10px]">
           <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
             <span class="text-slate-500">[SYSTEM]</span> SolHunter AI Engine initialized with $10.00 base capital.
           </div>
@@ -178,7 +183,7 @@
       var item = document.createElement('div');
       item.className = "p-2 bg-[#070a11] rounded border border-slate-800/60 " + colorClass;
       item.innerHTML = '<span class="text-slate-500">[' + time + ']</span> <span class="font-bold">' + tag + '</span> ' + msg;
-      container.prepend(item);
+      container.insertBefore(item, container.firstChild);
     }
 
     function generateTokenOpportunity(forceHigh) {
@@ -235,12 +240,16 @@
           '</button>' +
         '</div>';
 
-      list.prepend(card);
+      list.insertBefore(card, list.firstChild);
       if (list.children.length > 5) list.removeChild(list.lastChild);
 
       if (score >= 90 && openPositions.length < maxPositions && balance >= (positionSizeUSD + gasFee)) {
         executeAutoBuy(symbol, score);
       }
+    }
+
+    function forceScanSignal() {
+      generateTokenOpportunity(true);
     }
 
     function executeAutoBuy(symbol, score) {
@@ -267,18 +276,19 @@
     function updatePositionsEngine() {
       if (!isRunning || openPositions.length === 0) return;
 
-      openPositions.forEach(function(pos, index) {
+      for (var i = openPositions.length - 1; i >= 0; i--) {
+        var pos = openPositions[i];
         var change = (Math.random() * 0.16) - 0.06;
         pos.currentPrice = parseFloat((pos.currentPrice * (1 + change)).toFixed(6));
         pos.pnlPct = parseFloat((((pos.currentPrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
         pos.pnlUSD = parseFloat((pos.sizeUSD * (pos.pnlPct / 100)).toFixed(4));
 
         if (pos.pnlPct >= 15.0) {
-          closePosition(index, 'TAKE PROFIT (+15%)');
+          closePosition(i, 'TAKE PROFIT (+15%)');
         } else if (pos.pnlPct <= -10.0) {
-          closePosition(index, 'STOP LOSS (-10%)');
+          closePosition(i, 'STOP LOSS (-10%)');
         }
-      });
+      }
 
       renderPositions();
       updateUI();
@@ -315,7 +325,8 @@
       }
 
       posContainer.innerHTML = '';
-      openPositions.forEach(function(pos) {
+      for (var j = 0; j < openPositions.length; j++) {
+        var pos = openPositions[j];
         var isProfit = pos.pnlPct >= 0;
         var item = document.createElement('div');
         item.className = "bg-[#070a11] p-3 rounded border border-slate-800 flex justify-between items-center font-mono";
@@ -329,7 +340,7 @@
             '<div class="text-[9px] text-slate-500">TP: +15% | SL: -10%</div>' +
           '</div>';
         posContainer.appendChild(item);
-      });
+      }
     }
 
     function updateUI() {
@@ -387,13 +398,4 @@
       addLog('<span class="text-red-500">[KILL SWITCH]</span>', 'EMERGENCY KILL SWITCH DIAKTIFKAN!', 'text-rose-400 font-bold');
       alert('⚠️ EMERGENCY KILL SWITCH DIAKTIFKAN!');
     }
-
-    function setMode(mode) {
-      currentMode = mode;
-      var demoBtn = document.getElementById('mode-demo-btn');
-      var liveBtn = document.getElementById('mode-live-btn');
-
-      if (mode === 'DEMO') {
-        demoBtn.className = 'px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40';
-        liveBtn.className = 'px-2.5 py-1 rounded text-slate-500 hover:text-slate-300';
-        ad
+          
