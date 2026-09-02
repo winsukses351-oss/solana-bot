@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SolHunter AI — Solana Trading Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     ::-webkit-scrollbar { width: 3px; height: 3px; }
-    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-track { background: #07090e; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
   </style>
 </head>
@@ -76,41 +77,66 @@
     </section>
 
     <!-- METRICS GRID -->
-    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+    <section class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
       <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[9px] font-semibold uppercase tracking-wider">TOTAL BALANCE</div>
+        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">BALANCE</div>
         <div id="stat-balance" class="font-mono font-bold text-slate-100 text-sm mt-0.5">$10.0000</div>
-        <div class="text-[9px] text-slate-400 mt-0.5">Base $10.00</div>
+        <div class="text-[8.5px] text-slate-400 mt-0.5">Base $10.00</div>
       </div>
       
       <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[9px] font-semibold uppercase tracking-wider">NET REALIZED PNL</div>
+        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">UNREALIZED PNL</div>
+        <div id="stat-unrealized" class="font-mono font-bold text-slate-400 text-sm mt-0.5">$0.0000</div>
+        <div class="text-[8.5px] text-slate-500 mt-0.5">Open Positions</div>
+      </div>
+
+      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
+        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">REALIZED PNL</div>
         <div id="stat-realized" class="font-mono font-bold text-emerald-400 text-sm mt-0.5">+$0.0000</div>
-        <div class="text-[9px] text-emerald-500/80 mt-0.5">After Gas & Slippage</div>
+        <div class="text-[8.5px] text-emerald-500/80 mt-0.5">Closed Trades</div>
       </div>
 
       <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[9px] font-semibold uppercase tracking-wider">TOTAL GAS PAID</div>
-        <div id="stat-gas-paid" class="font-mono font-bold text-amber-400 text-sm mt-0.5">$0.0000</div>
-        <div class="text-[9px] text-amber-500/80 mt-0.5">Priority Fees</div>
-      </div>
-
-      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[9px] font-semibold uppercase tracking-wider">WIN RATE</div>
+        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">WIN RATE</div>
         <div id="stat-winrate" class="font-mono font-bold text-slate-100 text-sm mt-0.5">0%</div>
-        <div id="stat-winloss" class="text-[9px] text-slate-400 mt-0.5">0 W / 0 L</div>
+        <div id="stat-winloss" class="text-[8.5px] text-slate-400 mt-0.5">0 W / 0 L</div>
       </div>
 
       <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[9px] font-semibold uppercase tracking-wider">OPEN POSITIONS</div>
+        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">OPEN POSITIONS</div>
         <div id="stat-open-pos" class="font-mono font-bold text-slate-100 text-sm mt-0.5">0 / 3</div>
-        <div class="text-[9px] text-slate-400 mt-0.5">Max $3/Trade</div>
+        <div class="text-[8.5px] text-slate-400 mt-0.5">Max $3/Trade</div>
       </div>
 
       <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
-        <div class="text-slate-400 text-[9px] font-semibold uppercase tracking-wider">MAX DRAWDOWN</div>
+        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">TOTAL TRADES</div>
+        <div id="stat-total-trades" class="font-mono font-bold text-slate-100 text-sm mt-0.5">0</div>
+        <div class="text-[8.5px] text-slate-400 mt-0.5">Executed</div>
+      </div>
+
+      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
+        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">PROFIT FACTOR</div>
+        <div id="stat-profit-factor" class="font-mono font-bold text-emerald-400 text-sm mt-0.5">0.00</div>
+        <div class="text-[8.5px] text-slate-400 mt-0.5">Ratio</div>
+      </div>
+
+      <div class="bg-[#0d121f] p-2.5 rounded-xl border border-slate-800/80 shadow">
+        <div class="text-slate-400 text-[8.5px] font-semibold uppercase tracking-wider">MAX DRAWDOWN</div>
         <div id="stat-drawdown" class="font-mono font-bold text-rose-400 text-sm mt-0.5">0.00%</div>
-        <div class="text-[9px] text-slate-400 mt-0.5">Risk Guard Active</div>
+        <div class="text-[8.5px] text-slate-400 mt-0.5">Risk Guard</div>
+      </div>
+    </section>
+
+    <!-- BALANCE HISTORY GRAPH (CHART.JS) -->
+    <section class="bg-[#0d121f] rounded-xl border border-slate-800/80 p-3 shadow space-y-2">
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+        <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+          <span>📈</span> BALANCE HISTORY
+        </h2>
+        <span class="text-[9px] text-emerald-400 font-mono">REAL-TIME EQUITY</span>
+      </div>
+      <div class="h-32 w-full">
+        <canvas id="balanceChart"></canvas>
       </div>
     </section>
 
@@ -119,7 +145,7 @@
       <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/80 pb-2 gap-1">
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider">POSISI AKTIF ENGINE</h2>
+          <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider">OPEN POSITIONS — LIVE PNL</h2>
         </div>
         <span class="text-[9px] text-slate-400 font-mono">Auto Trade $3.00 | TP +15% | SL -10%</span>
       </div>
@@ -136,7 +162,7 @@
       <section class="bg-[#0d121f] rounded-xl border border-slate-800/80 p-3 shadow space-y-2.5">
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
           <div>
-            <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider">AI OPPORTUNITY SCANNER</h2>
+            <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider">TOP OPPORTUNITIES</h2>
             <p class="text-[8.5px] text-slate-400">Pump.fun, Raydium, DexScreener</p>
           </div>
           <span class="text-[9px] bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded-full font-mono">MONITORING</span>
@@ -150,13 +176,13 @@
       <!-- SYSTEM LOGS -->
       <section class="bg-[#0d121f] rounded-xl border border-slate-800/80 p-3 shadow space-y-2.5">
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-          <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider">SYSTEM LOGS</h2>
-          <span class="text-[9px] text-emerald-400 font-mono">LIVE FEED</span>
+          <h2 class="font-bold text-slate-100 uppercase text-[10px] tracking-wider">LIVE FEED & LOGS</h2>
+          <span class="text-[9px] text-emerald-400 font-mono">REAL-TIME</span>
         </div>
 
         <div id="feed-logs" class="space-y-1.5 max-h-[220px] overflow-y-auto pr-1 font-mono text-[9.5px]">
           <div class="p-1.5 bg-[#07090e] rounded-lg border border-slate-800/60 text-slate-400">
-            <span class="text-slate-400">[SYSTEM]</span> Engine initialized with $10.00 capital.
+            <span class="text-slate-400">[SYSTEM]</span> SolHunter AI Engine initialized with $10.00 capital.
           </div>
         </div>
       </section>
@@ -177,22 +203,55 @@
     var totalGasPaid = 0.00;
     var wins = 0;
     var losses = 0;
+    var grossProfits = 0;
+    var grossLosses = 0;
     var openPositions = [];
     var maxPositions = 3;
     var positionSizeUSD = 3.00;
     var gasFee = 0.10;
 
-    var sampleTokens = ["PUMPUSDC", "SOLCAT", "PEPESOL", "BONKDOG", "MOONDOG", "SOLSHIB", "WHALER", "NEOSOL", "AIINU"];
+    var sampleTokens = ["MOONCAT", "LUNKY", "BONKINU", "PEPE2", "SOLCAT", "PEPESOL", "BONKDOG", "WHALER", "NEOSOL", "AIINU"];
+
+    // CHART.JS INITIALIZATION
+    var chartCtx = document.getElementById('balanceChart').getContext('2d');
+    var balanceChart = new Chart(chartCtx, {
+      type: 'line',
+      data: {
+        labels: ['Init'],
+        datasets: [{
+          label: 'Balance ($)',
+          data: [10.00],
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.08)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 1.5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { display: false },
+          y: {
+            grid: { color: 'rgba(30, 41, 59, 0.4)' },
+            ticks: { color: '#64748b', font: { size: 9 } }
+          }
+        }
+      }
+    });
 
     function addLog(tag, msg, colorClass) {
       colorClass = colorClass || "text-slate-400";
       var container = document.getElementById('feed-logs');
       if (!container) return;
       var now = new Date();
-      var time = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+      var time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
       var item = document.createElement('div');
       item.className = "p-1.5 bg-[#07090e] rounded-lg border border-slate-800/60 " + colorClass;
-      item.innerHTML = '<span class="text-slate-400">[' + time + ']</span> <span class="font-bold">' + tag + '</span> ' + msg;
+      item.innerHTML = '<span class="text-slate-500">[' + time + ']</span> <span class="font-bold">' + tag + '</span> ' + msg;
       container.insertBefore(item, container.firstChild);
     }
 
@@ -206,7 +265,7 @@
       var safety = 100;
 
       var score = Math.floor((smartMoney * 0.3) + (whale * 0.2) + (momentum * 0.3) + (safety * 0.2));
-      var badge = score >= 90 ? "ELITE" : (score >= 80 ? "HIGH" : "LOW");
+      var badge = score >= 90 ? "ELITE" : (score >= 80 ? "HIGH" : "AVOID");
       var badgeColor = score >= 90 ? "bg-emerald-950/80 text-emerald-400 border-emerald-800/60" : (score >= 80 ? "bg-amber-950/80 text-amber-400 border-amber-800/60" : "bg-rose-950/80 text-rose-400 border-rose-800/60");
 
       var list = document.getElementById('opportunity-list');
@@ -228,7 +287,7 @@
         '</div>' +
         '<div>' +
           '<button class="px-2.5 py-1 rounded-md ' + (score >= 90 ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-800/80 text-slate-500') + ' text-[9.5px]">' +
-            (score >= 90 ? 'Auto Ready' : 'Low Score') +
+            (score >= 90 ? 'Auto Ready' : 'Score Low') +
           '</button>' +
         '</div>';
 
@@ -291,13 +350,30 @@
       balance += (pos.sizeUSD + pos.pnlUSD - gasFee);
       netRealizedPnL += netProfitUSD;
 
-      if (netProfitUSD > 0) wins++; else losses++;
+      if (netProfitUSD > 0) {
+        wins++;
+        grossProfits += netProfitUSD;
+      } else {
+        losses++;
+        grossLosses += Math.abs(netProfitUSD);
+      }
 
       addLog(
         netProfitUSD >= 0 ? '<span class="text-emerald-400">[AUTO SELL]</span>' : '<span class="text-rose-400">[AUTO SELL]</span>',
         'Tutup ' + pos.symbol + ' (' + reason + ') PnL: $' + netProfitUSD.toFixed(4),
         netProfitUSD >= 0 ? 'text-emerald-300' : 'text-rose-300'
       );
+
+      // UPDATE CHART
+      var now = new Date();
+      var timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+      balanceChart.data.labels.push(timeStr);
+      balanceChart.data.datasets[0].data.push(balance.toFixed(4));
+      if (balanceChart.data.labels.length > 15) {
+        balanceChart.data.labels.shift();
+        balanceChart.data.datasets[0].data.shift();
+      }
+      balanceChart.update();
 
       openPositions.splice(index, 1);
       renderPositions();
@@ -334,63 +410,12 @@
 
     function updateUI() {
       document.getElementById('stat-balance').innerText = '$' + balance.toFixed(4);
-      var realPnlElem = document.getElementById('stat-realized');
-      realPnlElem.innerText = (netRealizedPnL >= 0 ? '+' : '') + '$' + netRealizedPnL.toFixed(4);
-      document.getElementById('stat-gas-paid').innerText = '$' + totalGasPaid.toFixed(4);
-
-      var totalTrades = wins + losses;
-      var winRate = totalTrades > 0 ? Math.round((wins / totalTrades) * 100) : 0;
-      document.getElementById('stat-winrate').innerText = winRate + '%';
-      document.getElementById('stat-winloss').innerText = wins + ' W / ' + losses + ' L';
-      document.getElementById('stat-open-pos').innerText = openPositions.length + ' / ' + maxPositions;
-    }
-
-    function toggleBotEngine() {
-      if (killSwitchActivated) return;
-      isRunning = !isRunning;
-      var btn = document.getElementById('bot-toggle-btn');
-      if (isRunning) {
-        btn.innerText = 'Pause Engine';
-        btn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] shadow transition active:scale-95';
-      } else {
-        btn.innerText = 'Start Engine';
-        btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] shadow transition active:scale-95';
-      }
-    }
-
-    function triggerKillSwitch() {
-      killSwitchActivated = true;
-      isRunning = false;
-      alert('⚠️ EMERGENCY KILL SWITCH DIAKTIFKAN!');
-    }
-
-    function setMode(mode) {
-      currentMode = mode;
-    }
-
-    function updateCompound(val) {
-      compoundRate = parseInt(val);
-    }
-
-    setTimeout(function() {
-      generateTokenOpportunity(true);
-      generateTokenOpportunity(true);
       
-      setInterval(function() {
-        var now = new Date();
-        var clock = document.getElementById('live-clock');
-        if (clock) clock.innerText = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
-      }, 1000);
-
-      setInterval(function() {
-        generateTokenOpportunity(false);
-      }, 3000);
-
-      setInterval(function() {
-        updatePositionsEngine();
-      }, 1500);
-    }, 500);
-  </script>
-</body>
-  </html>
-        
+      // Calculate Unrealized PnL
+      var totalUnrealized = 0.0;
+      for (var k = 0; k < openPositions.length; k++) {
+        totalUnrealized += openPositions[k].pnlUSD;
+      }
+      var unrealizedElem = document.getElementById('stat-unrealized');
+      unrealizedElem.innerText = (totalUnrealized >= 0 ? '+' : '') + '$' + totalUnrealized.toFixed(4);
+      unrealizedElem.className = "font-mono font-bold text-sm mt-0.5 " + (to
