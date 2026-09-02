@@ -62,7 +62,7 @@
           <select id="compound-select" onchange="updateCompound(this.value)" class="bg-slate-900 border border-slate-700 text-amber-400 font-bold rounded px-2 py-1 text-xs focus:outline-none">
             <option value="0">OFF (0%)</option>
             <option value="25">25%</option>
-            <option value="50">50%</option>
+            <option value="50" selected>50%</option>
             <option value="75">75%</option>
             <option value="100">100%</option>
           </select>
@@ -123,7 +123,7 @@
 
           <!-- LIST TOKEN DENGAN 4 SCORING CORE -->
           <div id="opportunity-list" class="space-y-2 max-h-80 overflow-y-auto pr-1">
-            <!-- Items injected by Javascript -->
+            <div class="text-center py-4 text-slate-500 font-mono">Mengkoneksikan ke scanner DEX...</div>
           </div>
         </div>
 
@@ -136,7 +136,7 @@
 
           <div id="feed-logs" class="space-y-2 max-h-80 overflow-y-auto pr-1 font-mono text-[10px]">
             <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
-              <span class="text-slate-500">[SYSTEM]</span> Engine initialized with $10.00 base capital.
+              <span class="text-slate-500">[SYSTEM]</span> SolHunter AI Engine initialized with $10.00 base capital.
             </div>
           </div>
         </div>
@@ -159,10 +159,9 @@
   </div>
 
   <script>
-    // CORE SYSTEM STATE
     let isRunning = true;
     let currentMode = "DEMO";
-    let compoundRate = 0;
+    let compoundRate = 50;
     let killSwitchActivated = false;
 
     let baseCapital = 10.00;
@@ -178,12 +177,10 @@
 
     const sampleTokens = ["SOLCAT", "PUMPUSDC", "PEPESOL", "BONKDOG", "MOONDOG", "SOLSHIB", "RUGPRIDE", "WHALER", "NEOSOL", "AIINU"];
 
-    // Clock realtime
     setInterval(() => {
       document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('id-ID');
     }, 1000);
 
-    // LOG GENERATOR
     function addLog(tag, msg, colorClass = "text-slate-400") {
       const container = document.getElementById('feed-logs');
       const time = new Date().toLocaleTimeString('id-ID');
@@ -193,17 +190,15 @@
       container.prepend(item);
     }
 
-    // DISCOVERY & SCORING SIMULATOR
     function generateTokenOpportunity() {
       if (!isRunning || killSwitchActivated) return;
 
       const symbol = sampleTokens[Math.floor(Math.random() * sampleTokens.length)];
-      const smartMoney = Math.floor(Math.random() * 40) + 60; // 60-100
-      const whale = Math.floor(Math.random() * 45) + 55;      // 55-100
-      const momentum = Math.floor(Math.random() * 50) + 50;   // 50-100
-      const safety = Math.random() > 0.15 ? 100 : 30;         // 85% safe
+      const smartMoney = Math.floor(Math.random() * 40) + 60;
+      const whale = Math.floor(Math.random() * 45) + 55;
+      const momentum = Math.floor(Math.random() * 50) + 50;
+      const safety = Math.random() > 0.15 ? 100 : 30;
 
-      // Composite Score Formula
       const score = Math.floor((smartMoney * 0.3) + (whale * 0.2) + (momentum * 0.3) + (safety * 0.2));
 
       let badge = "AVOID";
@@ -223,6 +218,12 @@
       const vol = (Math.random() * 200 + 30).toFixed(1);
 
       const list = document.getElementById('opportunity-list');
+      
+      // Clean initial text
+      if (list.innerText.includes("Mengkoneksikan")) {
+        list.innerHTML = "";
+      }
+
       const card = document.createElement('div');
       card.className = "bg-[#070a11] p-3 rounded border border-slate-800/80 flex flex-wrap items-center justify-between gap-2 transition hover:border-slate-700";
       card.innerHTML = `
@@ -241,7 +242,7 @@
         <div class="text-right">
           <div class="text-xs font-mono font-bold text-slate-200">Liq: $${liq}k | Vol: $${vol}k</div>
           <button class="mt-1 px-3 py-1 rounded ${score >= 90 ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-800 text-slate-500 cursor-not-allowed'} font-bold text-[10px] transition">
-            ${score >= 90 ? 'Auto Buy Target' : 'Score Too Low'}
+            ${score >= 90 ? 'Auto Buy Target' : 'Score Low'}
           </button>
         </div>
       `;
@@ -249,13 +250,11 @@
       list.prepend(card);
       if (list.children.length > 5) list.removeChild(list.lastChild);
 
-      // Auto Execution Trigger for Elite Score (>=90)
       if (score >= 90 && openPositions.length < maxPositions && balance >= positionSizeUSD + gasFee) {
         executeAutoBuy(symbol, score);
       }
     }
 
-    // TRADING ENGINE (AUTO BUY)
     function executeAutoBuy(symbol, score) {
       totalGasPaid += gasFee;
       balance -= (positionSizeUSD + gasFee);
@@ -277,18 +276,15 @@
       updateUI();
     }
 
-    // POSITIONS MONITOR & AUTO EXIT (TP/SL)
     function updatePositionsEngine() {
       if (!isRunning || openPositions.length === 0) return;
 
       openPositions.forEach((pos, index) => {
-        // Price fluctuation simulation (-8% to +12%)
         const change = (Math.random() * 0.20) - 0.08;
         pos.currentPrice = parseFloat((pos.currentPrice * (1 + change)).toFixed(6));
         pos.pnlPct = parseFloat((((pos.currentPrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
         pos.pnlUSD = parseFloat((pos.sizeUSD * (pos.pnlPct / 100)).toFixed(4));
 
-        // Take Profit (+15%) atau Stop Loss (-10%)
         if (pos.pnlPct >= 15.0) {
           closePosition(index, 'TAKE PROFIT (+15%)');
         } else if (pos.pnlPct <= -10.0) {
@@ -310,10 +306,9 @@
 
       if (netProfitUSD > 0) wins++; else losses++;
 
-      // Compound calculation
       if (compoundRate > 0 && netProfitUSD > 0) {
         const compoundAmount = netProfitUSD * (compoundRate / 100);
-        addLog('<span class="text-amber-400">[COMPOUND]</span>', `Reinvesting ${compoundRate}% ($${compoundAmount.toFixed(4)}) ke saldo modal.`, 'text-amber-300');
+        addLog('<span class="text-amber-400">[COMPOUND]</span>', `Reinvesting ${compoundRate}% ($${compoundAmount.toFixed(4)}) ke modal.`, 'text-amber-300');
       }
 
       addLog(
@@ -393,4 +388,12 @@
         badge.innerText = 'SYSTEM PAUSED';
         badge.className = 'px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 font-bold';
         pulse.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
-        addLog('<span class="text-amber-400">[SYSTEM]</span>'
+        addLog('<span class="text-amber-400">[SYSTEM]</span>', 'Engine di-pause sementara.', 'text-slate-400');
+      }
+    }
+
+    function triggerKillSwitch() {
+      killSwitchActivated = true;
+      isRunning = false;
+      document.getElementById('system-status-badge').innerText = 'EMERGENCY KILLED';
+      document.getElem
