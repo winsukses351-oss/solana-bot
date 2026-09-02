@@ -15,10 +15,9 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Memory Database untuk Bot Simulator State
-let botState = {
-  active: false,
-  balanceUsd: 1000, // Capital awal simulasi $1,000
+// Memory Database (Simulasi Session)
+let botDatabase = {
+  balanceUsd: 1000,
   positions: [],
   history: []
 };
@@ -51,77 +50,76 @@ app.get('/api/health/dexscreener', async (req, res) => {
   }
 });
 
-// PHASE 2 & 3: TOKEN SCANNER WITH SAFETY CHECK
+// HELPER SCAN TOKENS
+async function getScannedTokens() {
+  const response = await fetch('https://api.dexscreener.com/token-profiles/latest/v1');
+  const profiles = await response.json();
+  if (!Array.isArray(profiles)) return [];
+
+  const solanaTokens = profiles.filter(p => p.chainId === 'solana' && p.tokenAddress).slice(0, 15);
+  if (solanaTokens.length === 0) return [];
+
+  const addresses = solanaTokens.map(t => t.tokenAddress).join(',');
+  const pairResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addresses}`);
+  const pairData = await pairResponse.json();
+  if (!pairData.pairs) return [];
+
+  const tokenMap = new Map();
+
+  pairData.pairs.forEach(pair => {
+    if (pair.chainId === 'solana' && pair.baseToken) {
+      const symbol = pair.baseToken.symbol;
+      if (symbol === 'SOL' || symbol === 'WSOL') return;
+
+      const createdAt = pair.pairCreatedAt ? new Date(pair.pairCreatedAt) : new Date();
+      const ageHours = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60)));
+      const liquidityUsd = pair.liquidity?.usd || 0;
+
+      let safetyStatus = 'SAFE';
+      let safetyColor = 'emerald';
+      if (liquidityUsd < 5000) {
+        safetyStatus = 'HIGH RISK (Low Liq)';
+        safetyColor = 'rose';
+      } else if (ageHours < 2) {
+        safetyStatus = 'MEDIUM RISK (New)';
+        safetyColor = 'amber';
+      }
+
+      const item = {
+        id: pair.pairAddress,
+        name: pair.baseToken.name || 'Unknown',
+        symbol: pair.baseToken.symbol || '???',
+        address: pair.baseToken.address,
+        priceUsd: parseFloat(pair.priceUsd || 0),
+        priceChange24h: pair.priceChange?.h24 || 0,
+        volume24h: pair.volume?.h24 || 0,
+        liquidityUsd: liquidityUsd,
+        ageHours: ageHours,
+        safetyStatus: safetyStatus,
+        safetyColor: safetyColor,
+        dexUrl: pair.url
+      };
+
+      if (!tokenMap.has(pair.baseToken.address) || tokenMap.get(pair.baseToken.address).liquidityUsd < item.liquidityUsd) {
+        tokenMap.set(pair.baseToken.address, item);
+      }
+    }
+  });
+
+  return Array.from(tokenMap.values()).sort((a, b) => b.volume24h - a.volume24h);
+}
+
+// TOKEN SCANNER ENDPOINT
 app.get('/api/tokens/scan', async (req, res) => {
   try {
-    const response = await fetch('https://api.dexscreener.com/token-profiles/latest/v1');
-    const profiles = await response.json();
-    if (!Array.isArray(profiles)) return res.json({ success: true, count: 0, data: [] });
-
-    const solanaTokens = profiles.filter(p => p.chainId === 'solana' && p.tokenAddress).slice(0, 15);
-    if (solanaTokens.length === 0) return res.json({ success: true, count: 0, data: [] });
-
-    const addresses = solanaTokens.map(t => t.tokenAddress).join(',');
-    const pairResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addresses}`);
-    const pairData = await pairResponse.json();
-    if (!pairData.pairs) return res.json({ success: true, count: 0, data: [] });
-
-    const tokenMap = new Map();
-
-    pairData.pairs.forEach(pair => {
-      if (pair.chainId === 'solana' && pair.baseToken) {
-        const symbol = pair.baseToken.symbol;
-        if (symbol === 'SOL' || symbol === 'WSOL') return;
-
-        const createdAt = pair.pairCreatedAt ? new Date(pair.pairCreatedAt) : new Date();
-        const ageHours = Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60)));
-        const liquidityUsd = pair.liquidity?.usd || 0;
-
-        let safetyStatus = 'SAFE';
-        let safetyColor = 'emerald';
-        if (liquidityUsd < 5000) {
-          safetyStatus = 'HIGH RISK (Low Liq)';
-          safetyColor = 'rose';
-        } else if (ageHours < 2) {
-          safetyStatus = 'MEDIUM RISK (New)';
-          safetyColor = 'amber';
-        }
-
-        const item = {
-          id: pair.pairAddress,
-          name: pair.baseToken.name || 'Unknown',
-          symbol: pair.baseToken.symbol || '???',
-          address: pair.baseToken.address,
-          priceUsd: parseFloat(pair.priceUsd || 0),
-          priceChange24h: pair.priceChange?.h24 || 0,
-          volume24h: pair.volume?.h24 || 0,
-          liquidityUsd: liquidityUsd,
-          ageHours: ageHours,
-          safetyStatus: safetyStatus,
-          safetyColor: safetyColor,
-          dexUrl: pair.url
-        };
-
-        if (!tokenMap.has(pair.baseToken.address) || tokenMap.get(pair.baseToken.address).liquidityUsd < item.liquidityUsd) {
-          tokenMap.set(pair.baseToken.address, item);
-        }
-      }
-    });
-
-    const tokens = Array.from(tokenMap.values()).sort((a, b) => b.volume24h - a.volume24h);
-
-    // EKSPLORASI BOT SIMULATOR KETIKA RUNNING
-    if (botState.active && tokens.length > 0) {
-      runBotEngine(tokens);
-    }
-
+    const tokens = await getScannedTokens();
     return res.json({ success: true, count: tokens.length, data: tokens });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// PHASE 3: WHALE TRACKER
+// WHALE TRACKER ENDPOINT
 app.get('/api/whales/activity', async (req, res) => {
   try {
     const response = await fetch('https://api.dexscreener.com/token-profiles/latest/v1');
@@ -158,19 +156,25 @@ app.get('/api/whales/activity', async (req, res) => {
   }
 });
 
-// LOGIKA AUTO-TRADING ENGINE
-function runBotEngine(scannedTokens) {
-  // 1. Eksekusi Jual (Cek TP +15% atau SL -10%)
-  botState.positions.forEach((pos, index) => {
-    const liveToken = scannedTokens.find(t => t.address === pos.address);
-    if (liveToken && liveToken.priceUsd > 0) {
-      const pnlPercent = ((liveToken.priceUsd - pos.entryPrice) / pos.entryPrice) * 100;
+// PHASE 4: BOT EXECUTION ENDPOINT (DITRIGGER CLIENT HANYA SAAT ACTIVE)
+app.post('/api/bot/tick', async (req, res) => {
+  try {
+    const tokens = await getScannedTokens();
+
+    // 1. Cek Jual (TP / SL)
+    for (let i = botDatabase.positions.length - 1; i >= 0; i--) {
+      const pos = botDatabase.positions[i];
+      const liveToken = tokens.find(t => t.address === pos.address);
+
+      // Fluktuasi harga simulasi jika live price belum berubah
+      const priceRatio = liveToken ? liveToken.priceUsd : pos.entryPrice * (1 + (Math.random() * 0.08 - 0.03));
+      const pnlPercent = ((priceRatio - pos.entryPrice) / pos.entryPrice) * 100;
 
       if (pnlPercent >= 15 || pnlPercent <= -10) {
         const returnAmount = pos.amountUsd + (pos.amountUsd * (pnlPercent / 100));
-        botState.balanceUsd += returnAmount;
+        botDatabase.balanceUsd += returnAmount;
 
-        botState.history.unshift({
+        botDatabase.history.unshift({
           id: Date.now(),
           symbol: pos.symbol,
           type: 'SELL',
@@ -180,57 +184,55 @@ function runBotEngine(scannedTokens) {
           time: new Date().toLocaleTimeString('id-ID')
         });
 
-        botState.positions.splice(index, 1);
+        botDatabase.positions.splice(i, 1);
       }
     }
-  });
 
-  // 2. Eksekusi Beli (Hanya jika posisi terbuka < 3 dan saldo memadai)
-  if (botState.positions.length < 3 && botState.balanceUsd >= 100) {
-    const candidate = scannedTokens.find(t => 
-      t.safetyStatus !== 'HIGH RISK (Low Liq)' && 
-      !botState.positions.some(p => p.address === t.address) &&
-      t.priceUsd > 0
-    );
+    // 2. Cek Beli
+    if (botDatabase.positions.length < 3 && botDatabase.balanceUsd >= 100 && tokens.length > 0) {
+      const candidate = tokens.find(t => 
+        t.safetyStatus !== 'HIGH RISK (Low Liq)' && 
+        !botDatabase.positions.some(p => p.address === t.address) &&
+        t.priceUsd > 0
+      );
 
-    if (candidate) {
-      const buyAmount = 100; // Tiap posisi $100
-      botState.balanceUsd -= buyAmount;
+      if (candidate) {
+        const buyAmount = 100;
+        botDatabase.balanceUsd -= buyAmount;
 
-      botState.positions.push({
-        address: candidate.address,
-        symbol: candidate.symbol,
-        name: candidate.name,
-        entryPrice: candidate.priceUsd,
-        amountUsd: buyAmount,
-        buyTime: new Date().toLocaleTimeString('id-ID')
-      });
+        botDatabase.positions.push({
+          address: candidate.address,
+          symbol: candidate.symbol,
+          name: candidate.name,
+          entryPrice: candidate.priceUsd,
+          amountUsd: buyAmount,
+          buyTime: new Date().toLocaleTimeString('id-ID')
+        });
 
-      botState.history.unshift({
-        id: Date.now(),
-        symbol: candidate.symbol,
-        type: 'BUY',
-        reason: 'AUTO SIGNAL MATCH',
-        pnlPercent: '0.00',
-        pnlUsd: '0.00',
-        time: new Date().toLocaleTimeString('id-ID')
-      });
+        botDatabase.history.unshift({
+          id: Date.now(),
+          symbol: candidate.symbol,
+          type: 'BUY',
+          reason: 'AUTO SIGNAL MATCH',
+          pnlPercent: '0.00',
+          pnlUsd: '0.00',
+          time: new Date().toLocaleTimeString('id-ID')
+        });
+      }
     }
-  }
-}
 
-// PHASE 4: BOT CONTROLLER ENDPOINTS
-app.get('/api/bot/status', (req, res) => {
-  res.json({ success: true, data: botState });
+    return res.json({ success: true, data: botDatabase });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
-app.post('/api/bot/toggle', (req, res) => {
-  botState.active = !botState.active;
-  res.json({ success: true, active: botState.active });
+app.get('/api/bot/state', (req, res) => {
+  res.json({ success: true, data: botDatabase });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Solana WIN Network Engine running on port ${PORT}`);
 });
-        
+  
