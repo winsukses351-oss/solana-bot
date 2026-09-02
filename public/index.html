@@ -11,7 +11,7 @@
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
   </style>
 </head>
-<body class="bg-[#070a11] text-slate-300 font-sans antialiased text-xs flex flex-col min-h-screen selection:bg-emerald-500 selection:text-black">
+<body class="bg-[#070a11] text-slate-300 font-sans antialiased text-xs flex flex-col min-h-screen">
 
   <!-- TOP TICKER BAR -->
   <div class="bg-[#0c101d] border-b border-slate-800/80 px-3 py-2 flex items-center justify-between overflow-x-auto whitespace-nowrap gap-4 text-[11px]">
@@ -21,7 +21,7 @@
         <span class="text-emerald-400">SolHunter</span> <span class="text-[9px] px-1.5 py-0.5 bg-emerald-950 text-emerald-400 rounded border border-emerald-800 font-mono">AI 24/7</span>
       </span>
       <div class="flex items-center gap-4 text-slate-400 font-mono text-[10px]">
-        <span>SOL/USD: <strong id="sol-price" class="text-slate-200">$140.00</strong></span>
+        <span>SOL/USD: <strong class="text-slate-200">$140.00</strong></span>
         <span>GAS: <strong class="text-amber-400">$0.10</strong></span>
         <span>ENGINE: <strong class="text-emerald-400">CONNECTED</strong></span>
       </div>
@@ -46,8 +46,7 @@
           ⚠️ EMERGENCY KILL SWITCH
         </button>
 
-        <!-- MANUAL TRIGGER BUTTON FOR MOBILE TESTING -->
-        <button onclick="forceScanSignal()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer">
+        <button onclick="forceScanSignal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer">
           ⚡ Run Scan Now
         </button>
 
@@ -176,10 +175,11 @@
     var sampleTokens = ["PUMPUSDC", "SOLCAT", "PEPESOL", "BONKDOG", "MOONDOG", "SOLSHIB", "WHALER", "NEOSOL", "AIINU"];
 
     function addLog(tag, msg, colorClass) {
-      if (!colorClass) colorClass = "text-slate-400";
+      colorClass = colorClass || "text-slate-400";
       var container = document.getElementById('feed-logs');
       if (!container) return;
-      var time = new Date().toLocaleTimeString('id-ID');
+      var now = new Date();
+      var time = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
       var item = document.createElement('div');
       item.className = "p-2 bg-[#070a11] rounded border border-slate-800/60 " + colorClass;
       item.innerHTML = '<span class="text-slate-500">[' + time + ']</span> <span class="font-bold">' + tag + '</span> ' + msg;
@@ -190,30 +190,14 @@
       if (!isRunning || killSwitchActivated) return;
 
       var symbol = sampleTokens[Math.floor(Math.random() * sampleTokens.length)];
-      
-      var smartMoney = Math.floor(Math.random() * 30) + 70;
-      var whale = Math.floor(Math.random() * 30) + 70;
-      var momentum = Math.floor(Math.random() * 30) + 70;
+      var smartMoney = forceHigh ? 95 : (Math.floor(Math.random() * 30) + 70);
+      var whale = forceHigh ? 92 : (Math.floor(Math.random() * 30) + 70);
+      var momentum = forceHigh ? 96 : (Math.floor(Math.random() * 30) + 70);
       var safety = 100;
 
-      if (forceHigh) {
-        smartMoney = 95; whale = 92; momentum = 96; safety = 100;
-      }
-
       var score = Math.floor((smartMoney * 0.3) + (whale * 0.2) + (momentum * 0.3) + (safety * 0.2));
-
-      var badge = "AVOID";
-      var badgeColor = "bg-rose-950 text-rose-400 border-rose-800";
-      if (score >= 90) {
-        badge = "ELITE";
-        badgeColor = "bg-emerald-950 text-emerald-400 border-emerald-800";
-      } else if (score >= 80) {
-        badge = "HIGH POTENTIAL";
-        badgeColor = "bg-amber-950 text-amber-400 border-amber-800";
-      }
-
-      var liq = (Math.random() * 80 + 10).toFixed(1);
-      var vol = (Math.random() * 200 + 30).toFixed(1);
+      var badge = score >= 90 ? "ELITE" : (score >= 80 ? "HIGH POTENTIAL" : "AVOID");
+      var badgeColor = score >= 90 ? "bg-emerald-950 text-emerald-400 border-emerald-800" : (score >= 80 ? "bg-amber-950 text-amber-400 border-amber-800" : "bg-rose-950 text-rose-400 border-rose-800");
 
       var list = document.getElementById('opportunity-list');
       if (!list) return;
@@ -227,14 +211,12 @@
             '<span class="px-1.5 py-0.5 rounded text-[8px] ' + badgeColor + ' border font-bold uppercase">' + badge + ' (SCORE: ' + score + ')</span>' +
           '</div>' +
           '<div class="flex flex-wrap gap-3 text-[9.5px] font-mono text-slate-400">' +
-            '<span>Smart Money: <strong class="' + (smartMoney > 80 ? 'text-emerald-400' : 'text-slate-200') + '">' + smartMoney + '/100</strong></span>' +
-            '<span>Whale: <strong class="' + (whale > 80 ? 'text-emerald-400' : 'text-slate-200') + '">' + whale + '/100</strong></span>' +
-            '<span>Momentum: <strong class="' + (momentum > 80 ? 'text-emerald-400' : 'text-slate-200') + '">' + momentum + '/100</strong></span>' +
-            '<span>Safety: <strong class="text-emerald-400">' + safety + '/100</strong></span>' +
+            '<span>Smart Money: ' + smartMoney + '/100</span>' +
+            '<span>Whale: ' + whale + '/100</span>' +
+            '<span>Momentum: ' + momentum + '/100</span>' +
           '</div>' +
         '</div>' +
         '<div class="text-right">' +
-          '<div class="text-xs font-mono font-bold text-slate-200">Liq: $' + liq + 'k | Vol: $' + vol + 'k</div>' +
           '<button class="mt-1 px-3 py-1 rounded ' + (score >= 90 ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-800 text-slate-500') + ' text-[10px]">' +
             (score >= 90 ? 'Auto Engine Ready' : 'Score Low') +
           '</button>' +
@@ -255,10 +237,9 @@
     function executeAutoBuy(symbol, score) {
       totalGasPaid += gasFee;
       balance -= (positionSizeUSD + gasFee);
-
       var entryPrice = (Math.random() * 0.001 + 0.0001).toFixed(6);
-      var pos = {
-        id: Date.now() + Math.random(),
+
+      openPositions.push({
         symbol: symbol,
         score: score,
         entryPrice: parseFloat(entryPrice),
@@ -266,10 +247,9 @@
         sizeUSD: positionSizeUSD,
         pnlPct: 0.0,
         pnlUSD: 0.0
-      };
+      });
 
-      openPositions.push(pos);
-      addLog('<span class="text-emerald-400">[AUTO BUY]</span>', 'Beli $' + positionSizeUSD.toFixed(2) + ' ' + symbol + ' @ $' + entryPrice + ' (Gas -$0.10)', 'text-emerald-300');
+      addLog('<span class="text-emerald-400">[AUTO BUY]</span>', 'Beli $' + positionSizeUSD.toFixed(2) + ' ' + symbol + ' @ $' + entryPrice, 'text-emerald-300');
       updateUI();
     }
 
@@ -297,7 +277,6 @@
     function closePosition(index, reason) {
       var pos = openPositions[index];
       totalGasPaid += gasFee;
-      
       var netProfitUSD = pos.pnlUSD - gasFee;
       balance += (pos.sizeUSD + pos.pnlUSD - gasFee);
       netRealizedPnL += netProfitUSD;
@@ -333,11 +312,10 @@
         item.innerHTML = 
           '<div>' +
             '<div class="font-bold text-slate-100">' + pos.symbol + ' <span class="text-[9px] px-1 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">SCORE ' + pos.score + '</span></div>' +
-            '<div class="text-[10px] text-slate-400">Entry: $' + pos.entryPrice + ' | Cur: $' + pos.currentPrice + ' | Size: $' + pos.sizeUSD.toFixed(2) + '</div>' +
+            '<div class="text-[10px] text-slate-400">Entry: $' + pos.entryPrice + ' | Cur: $' + pos.currentPrice + '</div>' +
           '</div>' +
           '<div class="text-right">' +
-            '<div class="font-bold text-sm ' + (isProfit ? 'text-emerald-400' : 'text-rose-400') + '">' + (isProfit ? '+' : '') + pos.pnlPct + '% ($' + pos.pnlUSD.toFixed(4) + ')</div>' +
-            '<div class="text-[9px] text-slate-500">TP: +15% | SL: -10%</div>' +
+            '<div class="font-bold text-sm ' + (isProfit ? 'text-emerald-400' : 'text-rose-400') + '">' + (isProfit ? '+' : '') + pos.pnlPct + '%</div>' +
           '</div>';
         posContainer.appendChild(item);
       }
@@ -345,57 +323,64 @@
 
     function updateUI() {
       document.getElementById('stat-balance').innerText = '$' + balance.toFixed(4);
-      
       var realPnlElem = document.getElementById('stat-realized');
       realPnlElem.innerText = (netRealizedPnL >= 0 ? '+' : '') + '$' + netRealizedPnL.toFixed(4);
-      realPnlElem.className = 'font-mono font-bold text-base ' + (netRealizedPnL >= 0 ? 'text-emerald-400' : 'text-rose-400');
-
       document.getElementById('stat-gas-paid').innerText = '$' + totalGasPaid.toFixed(4);
 
       var totalTrades = wins + losses;
       var winRate = totalTrades > 0 ? Math.round((wins / totalTrades) * 100) : 0;
       document.getElementById('stat-winrate').innerText = winRate + '%';
       document.getElementById('stat-winloss').innerText = wins + ' Win / ' + losses + ' Loss';
-
       document.getElementById('stat-open-pos').innerText = openPositions.length + ' / ' + maxPositions;
-
-      var maxDD = balance < baseCapital ? (((baseCapital - balance) / baseCapital) * 100).toFixed(2) : "0.00";
-      document.getElementById('stat-drawdown').innerText = '-' + maxDD + '%';
     }
 
     function toggleBotEngine() {
       if (killSwitchActivated) return;
       isRunning = !isRunning;
       var btn = document.getElementById('bot-toggle-btn');
-      var badge = document.getElementById('system-status-badge');
-      var pulse = document.getElementById('live-pulse');
-
       if (isRunning) {
         btn.innerText = 'Pause Engine';
         btn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer';
-        badge.innerText = 'SYSTEM ACTIVE';
-        badge.className = 'px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold';
-        pulse.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
-        addLog('<span class="text-emerald-400">[SYSTEM]</span>', 'Engine dilanjutkan.', 'text-slate-300');
       } else {
         btn.innerText = 'Start Engine';
         btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer';
-        badge.innerText = 'SYSTEM PAUSED';
-        badge.className = 'px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 font-bold';
-        pulse.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
-        addLog('<span class="text-amber-400">[SYSTEM]</span>', 'Engine di-pause sementara.', 'text-slate-400');
       }
     }
 
     function triggerKillSwitch() {
       killSwitchActivated = true;
       isRunning = false;
-      document.getElementById('system-status-badge').innerText = 'EMERGENCY KILLED';
-      document.getElementById('system-status-badge').className = 'px-2 py-0.5 rounded bg-red-950 text-red-400 border border-red-800 font-bold';
-      document.getElementById('live-pulse').className = 'w-2.5 h-2.5 rounded-full bg-red-500';
-      document.getElementById('bot-toggle-btn').disabled = true;
-      document.getElementById('bot-toggle-btn').className = 'bg-slate-800 text-slate-500 px-3 py-1.5 rounded text-xs cursor-not-allowed';
-      addLog('<span class="text-red-500">[KILL SWITCH]</span>', 'EMERGENCY KILL SWITCH DIAKTIFKAN!', 'text-rose-400 font-bold');
       alert('⚠️ EMERGENCY KILL SWITCH DIAKTIFKAN!');
     }
+
+    function setMode(mode) {
+      currentMode = mode;
+    }
+
+    function updateCompound(val) {
+      compoundRate = parseInt(val);
+    }
+
+    // RUN IMMEDIATELY WITHOUT WAITING FOR ANYTHING
+    setTimeout(function() {
+      generateTokenOpportunity(true);
+      generateTokenOpportunity(true);
+      
+      setInterval(function() {
+        var now = new Date();
+        var clock = document.getElementById('live-clock');
+        if (clock) clock.innerText = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+      }, 1000);
+
+      setInterval(function() {
+        generateTokenOpportunity(false);
+      }, 3000);
+
+      setInterval(function() {
+        updatePositionsEngine();
+      }, 1500);
+    }, 500);
+  </script>
+</body>
+        </html>
           
