@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SolHunter AI — Solana Meme Coin Hunter & Trading System</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: #070a11; }
@@ -19,11 +18,11 @@
   <div class="bg-[#0c101d] border-b border-slate-800/80 px-4 py-2 flex items-center justify-between overflow-x-auto whitespace-nowrap gap-4 text-[11px]">
     <div class="flex items-center gap-3">
       <span class="flex items-center gap-1.5 font-bold text-slate-100">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="live-pulse" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
         <span class="text-emerald-400">SolHunter</span> <span class="text-[9px] px-1.5 py-0.5 bg-emerald-950 text-emerald-400 rounded border border-emerald-800 font-mono">AI 24/7</span>
       </span>
       <div class="flex items-center gap-4 text-slate-400 font-mono text-[10px]">
-        <span>SOL/USD: <strong class="text-slate-200">$140.00</strong></span>
+        <span>SOL/USD: <strong id="sol-price" class="text-slate-200">$140.00</strong></span>
         <span>NETWORK GAS: <strong class="text-amber-400">$0.10 / TX</strong></span>
         <span>PUMP.FUN / RAYDIUM ENGINE: <strong class="text-emerald-400">CONNECTED</strong></span>
       </div>
@@ -70,7 +69,7 @@
         </div>
       </div>
 
-      <!-- METRICS GRID (CORE METRICS) -->
+      <!-- METRICS GRID -->
       <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5">
         <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
           <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">TOTAL BALANCE</div>
@@ -104,7 +103,7 @@
 
         <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
           <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">MAX DRAWDOWN</div>
-          <div id="stat-drawdown" class="font-mono font-bold text-rose-400 text-base">-0.00%</div>
+          <div id="stat-drawdown" class="font-mono font-bold text-rose-400 text-base">0.00%</div>
           <div class="text-[9px] text-slate-500">Risk Limit Active</div>
         </div>
       </div>
@@ -124,29 +123,11 @@
 
           <!-- LIST TOKEN DENGAN 4 SCORING CORE -->
           <div id="opportunity-list" class="space-y-2 max-h-80 overflow-y-auto pr-1">
-            <!-- Simulated Item Token -->
-            <div class="bg-[#070a11] p-3 rounded border border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
-              <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-slate-100 text-sm font-mono">PUMPUSDC</span>
-                  <span class="px-1.5 py-0.5 rounded text-[8px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold uppercase">ELITE (SCORE: 94)</span>
-                </div>
-                <div class="flex gap-3 text-[9.5px] font-mono text-slate-400">
-                  <span>Smart Money: <strong class="text-emerald-400">92/100</strong></span>
-                  <span>Whale: <strong class="text-emerald-400">88/100</strong></span>
-                  <span>Momentum: <strong class="text-emerald-400">95/100</strong></span>
-                  <span>Safety: <strong class="text-emerald-400">100/100</strong></span>
-                </div>
-              </div>
-              <div class="text-right">
-                <div class="text-xs font-mono font-bold text-slate-200">Liq: $45.2k | Vol: $120k</div>
-                <button class="mt-1 px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition">Auto Engine Ready</button>
-              </div>
-            </div>
+            <!-- Items injected by Javascript -->
           </div>
         </div>
 
-        <!-- SYSTEM LOGS & ALERTS (TELEGRAM REMOVED) -->
+        <!-- SYSTEM LOGS & ALERTS -->
         <div class="bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
           <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
             <h2 class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">SYSTEM LOGS & ALERTS</h2>
@@ -155,13 +136,7 @@
 
           <div id="feed-logs" class="space-y-2 max-h-80 overflow-y-auto pr-1 font-mono text-[10px]">
             <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
-              <span class="text-emerald-400 font-bold">[OPPORTUNITY ENGINE]</span> Sinyal Token Elite terdeteksi: <strong>PUMPUSDC</strong> (Score 94).
-            </div>
-            <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
-              <span class="text-amber-400 font-bold">[SAFETY ENGINE]</span> Rug & Honeypot Check Pass (LP Burned 100%).
-            </div>
-            <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
-              <span class="text-slate-500">[07:58:14]</span> SolHunter AI Engine initialized with $10.00 base capital.
+              <span class="text-slate-500">[SYSTEM]</span> Engine initialized with $10.00 base capital.
             </div>
           </div>
         </div>
@@ -172,11 +147,11 @@
       <div class="bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
           <h2 class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">POSISI AKTIF (AUTO TRADING ENGINE)</h2>
-          <span class="text-[9px] text-slate-500">Auto Buy $3.00 | TP +15% | SL -10% | Gas Fee Included</span>
+          <span class="text-[9px] text-slate-500">Auto Buy $3.00 | TP +15% | SL -10% | Gas Fee Included ($0.10)</span>
         </div>
 
         <div id="positions-list" class="space-y-2">
-          <div class="text-center py-6 text-slate-500 font-mono">Belum ada posisi trading yang terbuka. Engine sedang mencari sinyal Elite (90+).</div>
+          <div id="no-pos-msg" class="text-center py-6 text-slate-500 font-mono">Belum ada posisi trading yang terbuka. Engine sedang mencari sinyal Elite (90+).</div>
         </div>
       </div>
 
@@ -184,64 +159,238 @@
   </div>
 
   <script>
+    // CORE SYSTEM STATE
     let isRunning = true;
     let currentMode = "DEMO";
     let compoundRate = 0;
     let killSwitchActivated = false;
+
+    let baseCapital = 10.00;
+    let balance = 10.00;
+    let netRealizedPnL = 0.00;
+    let totalGasPaid = 0.00;
+    let wins = 0;
+    let losses = 0;
+    let openPositions = [];
+    const maxPositions = 3;
+    const positionSizeUSD = 3.00;
+    const gasFee = 0.10;
+
+    const sampleTokens = ["SOLCAT", "PUMPUSDC", "PEPESOL", "BONKDOG", "MOONDOG", "SOLSHIB", "RUGPRIDE", "WHALER", "NEOSOL", "AIINU"];
 
     // Clock realtime
     setInterval(() => {
       document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('id-ID');
     }, 1000);
 
+    // LOG GENERATOR
+    function addLog(tag, msg, colorClass = "text-slate-400") {
+      const container = document.getElementById('feed-logs');
+      const time = new Date().toLocaleTimeString('id-ID');
+      const item = document.createElement('div');
+      item.className = `p-2 bg-[#070a11] rounded border border-slate-800/60 ${colorClass}`;
+      item.innerHTML = `<span class="text-slate-500">[${time}]</span> <span class="font-bold">${tag}</span> ${msg}`;
+      container.prepend(item);
+    }
+
+    // DISCOVERY & SCORING SIMULATOR
+    function generateTokenOpportunity() {
+      if (!isRunning || killSwitchActivated) return;
+
+      const symbol = sampleTokens[Math.floor(Math.random() * sampleTokens.length)];
+      const smartMoney = Math.floor(Math.random() * 40) + 60; // 60-100
+      const whale = Math.floor(Math.random() * 45) + 55;      // 55-100
+      const momentum = Math.floor(Math.random() * 50) + 50;   // 50-100
+      const safety = Math.random() > 0.15 ? 100 : 30;         // 85% safe
+
+      // Composite Score Formula
+      const score = Math.floor((smartMoney * 0.3) + (whale * 0.2) + (momentum * 0.3) + (safety * 0.2));
+
+      let badge = "AVOID";
+      let badgeColor = "bg-rose-950 text-rose-400 border-rose-800";
+      if (score >= 90) {
+        badge = "ELITE";
+        badgeColor = "bg-emerald-950 text-emerald-400 border-emerald-800";
+      } else if (score >= 80) {
+        badge = "HIGH POTENTIAL";
+        badgeColor = "bg-amber-950 text-amber-400 border-amber-800";
+      } else if (score >= 70) {
+        badge = "MODERATE";
+        badgeColor = "bg-blue-950 text-blue-400 border-blue-800";
+      }
+
+      const liq = (Math.random() * 80 + 10).toFixed(1);
+      const vol = (Math.random() * 200 + 30).toFixed(1);
+
+      const list = document.getElementById('opportunity-list');
+      const card = document.createElement('div');
+      card.className = "bg-[#070a11] p-3 rounded border border-slate-800/80 flex flex-wrap items-center justify-between gap-2 transition hover:border-slate-700";
+      card.innerHTML = `
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-100 text-sm font-mono">${symbol}</span>
+            <span class="px-1.5 py-0.5 rounded text-[8px] ${badgeColor} border font-bold uppercase">${badge} (SCORE: ${score})</span>
+          </div>
+          <div class="flex flex-wrap gap-3 text-[9.5px] font-mono text-slate-400">
+            <span>Smart Money: <strong class="${smartMoney > 80 ? 'text-emerald-400' : 'text-slate-200'}">${smartMoney}/100</strong></span>
+            <span>Whale: <strong class="${whale > 80 ? 'text-emerald-400' : 'text-slate-200'}">${whale}/100</strong></span>
+            <span>Momentum: <strong class="${momentum > 80 ? 'text-emerald-400' : 'text-slate-200'}">${momentum}/100</strong></span>
+            <span>Safety: <strong class="${safety === 100 ? 'text-emerald-400' : 'text-rose-400'}">${safety}/100</strong></span>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs font-mono font-bold text-slate-200">Liq: $${liq}k | Vol: $${vol}k</div>
+          <button class="mt-1 px-3 py-1 rounded ${score >= 90 ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-800 text-slate-500 cursor-not-allowed'} font-bold text-[10px] transition">
+            ${score >= 90 ? 'Auto Buy Target' : 'Score Too Low'}
+          </button>
+        </div>
+      `;
+
+      list.prepend(card);
+      if (list.children.length > 5) list.removeChild(list.lastChild);
+
+      // Auto Execution Trigger for Elite Score (>=90)
+      if (score >= 90 && openPositions.length < maxPositions && balance >= positionSizeUSD + gasFee) {
+        executeAutoBuy(symbol, score);
+      }
+    }
+
+    // TRADING ENGINE (AUTO BUY)
+    function executeAutoBuy(symbol, score) {
+      totalGasPaid += gasFee;
+      balance -= (positionSizeUSD + gasFee);
+
+      const entryPrice = (Math.random() * 0.001 + 0.0001).toFixed(6);
+      const pos = {
+        id: Date.now(),
+        symbol: symbol,
+        score: score,
+        entryPrice: parseFloat(entryPrice),
+        currentPrice: parseFloat(entryPrice),
+        sizeUSD: positionSizeUSD,
+        pnlPct: 0.0,
+        pnlUSD: 0.0
+      };
+
+      openPositions.push(pos);
+      addLog('<span class="text-emerald-400">[AUTO BUY]</span>', `Beli $${positionSizeUSD.toFixed(2)} ${symbol} @ $${entryPrice} (Gas Fee -$0.10)`, 'text-emerald-300');
+      updateUI();
+    }
+
+    // POSITIONS MONITOR & AUTO EXIT (TP/SL)
+    function updatePositionsEngine() {
+      if (!isRunning || openPositions.length === 0) return;
+
+      openPositions.forEach((pos, index) => {
+        // Price fluctuation simulation (-8% to +12%)
+        const change = (Math.random() * 0.20) - 0.08;
+        pos.currentPrice = parseFloat((pos.currentPrice * (1 + change)).toFixed(6));
+        pos.pnlPct = parseFloat((((pos.currentPrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
+        pos.pnlUSD = parseFloat((pos.sizeUSD * (pos.pnlPct / 100)).toFixed(4));
+
+        // Take Profit (+15%) atau Stop Loss (-10%)
+        if (pos.pnlPct >= 15.0) {
+          closePosition(index, 'TAKE PROFIT (+15%)');
+        } else if (pos.pnlPct <= -10.0) {
+          closePosition(index, 'STOP LOSS (-10%)');
+        }
+      });
+
+      renderPositions();
+      updateUI();
+    }
+
+    function closePosition(index, reason) {
+      const pos = openPositions[index];
+      totalGasPaid += gasFee;
+      
+      const netProfitUSD = pos.pnlUSD - gasFee;
+      balance += (pos.sizeUSD + pos.pnlUSD - gasFee);
+      netRealizedPnL += netProfitUSD;
+
+      if (netProfitUSD > 0) wins++; else losses++;
+
+      // Compound calculation
+      if (compoundRate > 0 && netProfitUSD > 0) {
+        const compoundAmount = netProfitUSD * (compoundRate / 100);
+        addLog('<span class="text-amber-400">[COMPOUND]</span>', `Reinvesting ${compoundRate}% ($${compoundAmount.toFixed(4)}) ke saldo modal.`, 'text-amber-300');
+      }
+
+      addLog(
+        netProfitUSD >= 0 ? '<span class="text-emerald-400">[AUTO SELL]</span>' : '<span class="text-rose-400">[AUTO SELL]</span>',
+        `Tutup ${pos.symbol} (${reason}) PnL Bersih: $${netProfitUSD.toFixed(4)} (Gas Fee -$0.10)`,
+        netProfitUSD >= 0 ? 'text-emerald-300' : 'text-rose-300'
+      );
+
+      openPositions.splice(index, 1);
+      renderPositions();
+      updateUI();
+    }
+
+    function renderPositions() {
+      const posContainer = document.getElementById('positions-list');
+      if (openPositions.length === 0) {
+        posContainer.innerHTML = '<div class="text-center py-6 text-slate-500 font-mono">Belum ada posisi trading yang terbuka. Engine sedang mencari sinyal Elite (90+).</div>';
+        return;
+      }
+
+      posContainer.innerHTML = '';
+      openPositions.forEach(pos => {
+        const isProfit = pos.pnlPct >= 0;
+        const item = document.createElement('div');
+        item.className = "bg-[#070a11] p-3 rounded border border-slate-800 flex justify-between items-center font-mono";
+        item.innerHTML = `
+          <div>
+            <div class="font-bold text-slate-100">${pos.symbol} <span class="text-[9px] px-1 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">SCORE ${pos.score}</span></div>
+            <div class="text-[10px] text-slate-400">Entry: $${pos.entryPrice} | Cur: $${pos.currentPrice} | Size: $${pos.sizeUSD.toFixed(2)}</div>
+          </div>
+          <div class="text-right">
+            <div class="font-bold text-sm ${isProfit ? 'text-emerald-400' : 'text-rose-400'}">${isProfit ? '+' : ''}${pos.pnlPct}% ($${pos.pnlUSD.toFixed(4)})</div>
+            <div class="text-[9px] text-slate-500">TP: +15% | SL: -10%</div>
+          </div>
+        `;
+        posContainer.appendChild(item);
+      });
+    }
+
+    function updateUI() {
+      document.getElementById('stat-balance').innerText = `$${balance.toFixed(4)}`;
+      
+      const realPnlElem = document.getElementById('stat-realized');
+      realPnlElem.innerText = `${netRealizedPnL >= 0 ? '+' : ''}$${netRealizedPnL.toFixed(4)}`;
+      realPnlElem.className = `font-mono font-bold text-base ${netRealizedPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      document.getElementById('stat-gas-paid').innerText = `$${totalGasPaid.toFixed(4)}`;
+
+      const totalTrades = wins + losses;
+      const winRate = totalTrades > 0 ? Math.round((wins / totalTrades) * 100) : 0;
+      document.getElementById('stat-winrate').innerText = `${winRate}%`;
+      document.getElementById('stat-winloss').innerText = `${wins} Win / ${losses} Loss`;
+
+      document.getElementById('stat-open-pos').innerText = `${openPositions.length} / ${maxPositions}`;
+
+      const maxDD = balance < baseCapital ? (((baseCapital - balance) / baseCapital) * 100).toFixed(2) : "0.00";
+      document.getElementById('stat-drawdown').innerText = `-${maxDD}%`;
+    }
+
     function toggleBotEngine() {
       if (killSwitchActivated) return;
       isRunning = !isRunning;
       const btn = document.getElementById('bot-toggle-btn');
       const badge = document.getElementById('system-status-badge');
+      const pulse = document.getElementById('live-pulse');
 
       if (isRunning) {
         btn.innerText = 'Pause Engine';
         btn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded text-xs transition shadow-lg shadow-rose-950 cursor-pointer';
         badge.innerText = 'SYSTEM ACTIVE';
         badge.className = 'px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold';
+        pulse.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
+        addLog('<span class="text-emerald-400">[SYSTEM]</span>', 'Engine dilanjutkan.', 'text-slate-300');
       } else {
         btn.innerText = 'Start Engine';
         btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer shadow-lg shadow-emerald-950';
         badge.innerText = 'SYSTEM PAUSED';
         badge.className = 'px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 font-bold';
-      }
-    }
-
-    function triggerKillSwitch() {
-      killSwitchActivated = true;
-      isRunning = false;
-      document.getElementById('system-status-badge').innerText = 'EMERGENCY KILLED';
-      document.getElementById('system-status-badge').className = 'px-2 py-0.5 rounded bg-red-950 text-red-400 border border-red-800 font-bold';
-      document.getElementById('bot-toggle-btn').disabled = true;
-      document.getElementById('bot-toggle-btn').className = 'bg-slate-800 text-slate-500 px-3 py-1.5 rounded text-xs cursor-not-allowed';
-      alert('⚠️ EMERGENCY KILL SWITCH DIAKTIFKAN! Seluruh transaksi dihentikan seketika.');
-    }
-
-    function setMode(mode) {
-      currentMode = mode;
-      const demoBtn = document.getElementById('mode-demo-btn');
-      const liveBtn = document.getElementById('mode-live-btn');
-
-      if (mode === 'DEMO') {
-        demoBtn.className = 'px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40';
-        liveBtn.className = 'px-2.5 py-1 rounded text-slate-500 hover:text-slate-300';
-      } else {
-        liveBtn.className = 'px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40';
-        demoBtn.className = 'px-2.5 py-1 rounded text-slate-500 hover:text-slate-300';
-      }
-    }
-
-    function updateCompound(val) {
-      compoundRate = parseInt(val);
-      console.log('Compound Rate updated to:', compoundRate + '%');
-    }
-  </script>
-</body>
-  </html>
-  
+        pulse.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
+        addLog('<span class="text-amber-400">[SYSTEM]</span>'
