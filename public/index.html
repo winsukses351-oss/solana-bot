@@ -3,19 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SolHunter AI — Solana Meme Coin Hunter & Trading System</title>
+  <title>SolHunter AI — Solana Trading Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: #070a11; }
     ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
-    ::-webkit-scrollbar-thumb:hover { background: #334155; }
   </style>
 </head>
 <body class="bg-[#070a11] text-slate-300 font-sans antialiased text-xs flex flex-col min-h-screen selection:bg-emerald-500 selection:text-black">
 
-  <!-- TOP TICKER BAR -->
-  <div class="bg-[#0c101d] border-b border-slate-800/80 px-4 py-2 flex items-center justify-between overflow-x-auto whitespace-nowrap gap-4 text-[11px]">
+  <div class="bg-[#0c101d] border-b border-slate-800/80 px-3 py-2 flex items-center justify-between overflow-x-auto whitespace-nowrap gap-4 text-[11px]">
     <div class="flex items-center gap-3">
       <span class="flex items-center gap-1.5 font-bold text-slate-100">
         <span id="live-pulse" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -23,8 +21,8 @@
       </span>
       <div class="flex items-center gap-4 text-slate-400 font-mono text-[10px]">
         <span>SOL/USD: <strong id="sol-price" class="text-slate-200">$140.00</strong></span>
-        <span>NETWORK GAS: <strong class="text-amber-400">$0.10 / TX</strong></span>
-        <span>PUMP.FUN / RAYDIUM ENGINE: <strong class="text-emerald-400">CONNECTED</strong></span>
+        <span>GAS: <strong class="text-amber-400">$0.10</strong></span>
+        <span>ENGINE: <strong class="text-emerald-400">CONNECTED</strong></span>
       </div>
     </div>
     <div class="flex items-center gap-3 text-[10px]">
@@ -33,130 +31,116 @@
     </div>
   </div>
 
-  <!-- MAIN APP LAYOUT -->
-  <div class="flex-1 flex overflow-hidden">
+  <main class="flex-1 p-3 space-y-3 max-w-7xl mx-auto w-full">
     
-    <!-- MAIN DASHBOARD CONTENT -->
-    <main class="flex-1 p-3 md:p-4 overflow-y-auto space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-3 bg-[#0c101d] p-3 rounded-lg border border-slate-800/80">
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="bot-toggle-btn" onclick="toggleBotEngine()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer">
+          Pause Engine
+        </button>
+        
+        <button id="kill-switch-btn" onclick="triggerKillSwitch()" class="bg-red-950 hover:bg-red-900 text-red-400 border border-red-700 font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer">
+          ⚠️ EMERGENCY KILL SWITCH
+        </button>
+
+        <div class="flex items-center bg-slate-900 border border-slate-800 rounded p-0.5 text-[10px] font-mono">
+          <button id="mode-demo-btn" onclick="setMode('DEMO')" class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40">DEMO ($10 CAP)</button>
+          <button id="mode-live-btn" onclick="setMode('LIVE')" class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-300">LIVE</button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 font-mono text-[11px]">
+        <span class="text-slate-400">COMPOUND ENGINE:</span>
+        <select id="compound-select" onchange="updateCompound(this.value)" class="bg-slate-900 border border-slate-700 text-amber-400 font-bold rounded px-2 py-1 text-xs focus:outline-none">
+          <option value="0">OFF (0%)</option>
+          <option value="25">25%</option>
+          <option value="50" selected>50%</option>
+          <option value="75">75%</option>
+          <option value="100">100%</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+        <div class="text-slate-500 text-[9px] uppercase font-bold">TOTAL BALANCE</div>
+        <div id="stat-balance" class="font-mono font-bold text-slate-100 text-base">$10.0000</div>
+        <div class="text-[9px] text-slate-500">Base Capital $10.00</div>
+      </div>
       
-      <!-- TOP ACTION & SAFETY CONTROLS -->
-      <div class="flex flex-wrap items-center justify-between gap-3 bg-[#0c101d] p-3 rounded-lg border border-slate-800/80">
-        <div class="flex items-center gap-3">
-          <button id="bot-toggle-btn" onclick="toggleBotEngine()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded text-xs transition shadow-lg shadow-rose-950 cursor-pointer">
-            Pause Engine
-          </button>
-          
-          <!-- EMERGENCY KILL SWITCH -->
-          <button id="kill-switch-btn" onclick="triggerKillSwitch()" class="bg-red-950 hover:bg-red-900 text-red-400 border border-red-700 font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer">
-            ⚠️ EMERGENCY KILL SWITCH
-          </button>
-
-          <div class="flex items-center bg-slate-900 border border-slate-800 rounded p-0.5 text-[10px] font-mono">
-            <button id="mode-demo-btn" onclick="setMode('DEMO')" class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40">DEMO ($10 CAP)</button>
-            <button id="mode-live-btn" onclick="setMode('LIVE')" class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-300">LIVE</button>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-3 font-mono text-[11px]">
-          <span class="text-slate-400">COMPOUND ENGINE:</span>
-          <select id="compound-select" onchange="updateCompound(this.value)" class="bg-slate-900 border border-slate-700 text-amber-400 font-bold rounded px-2 py-1 text-xs focus:outline-none">
-            <option value="0">OFF (0%)</option>
-            <option value="25">25%</option>
-            <option value="50" selected>50%</option>
-            <option value="75">75%</option>
-            <option value="100">100%</option>
-          </select>
-        </div>
+      <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+        <div class="text-slate-500 text-[9px] uppercase font-bold">NET REALIZED PNL</div>
+        <div id="stat-realized" class="font-mono font-bold text-emerald-400 text-base">+$0.0000</div>
+        <div class="text-[9px] text-emerald-500/80">After Gas & Slippage</div>
       </div>
 
-      <!-- METRICS GRID -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5">
-        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
-          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">TOTAL BALANCE</div>
-          <div id="stat-balance" class="font-mono font-bold text-slate-100 text-base">$10.0000</div>
-          <div class="text-[9px] text-slate-500">Base Capital $10.00</div>
-        </div>
-        
-        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
-          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">NET REALIZED PNL</div>
-          <div id="stat-realized" class="font-mono font-bold text-emerald-400 text-base">+$0.0000</div>
-          <div class="text-[9px] text-emerald-500/80">After Gas & Slippage</div>
-        </div>
-
-        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
-          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">TOTAL GAS PAID</div>
-          <div id="stat-gas-paid" class="font-mono font-bold text-amber-400 text-base">$0.0000</div>
-          <div class="text-[9px] text-amber-500/80">Solana Priority Fees</div>
-        </div>
-
-        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
-          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">WIN RATE / TRADES</div>
-          <div id="stat-winrate" class="font-mono font-bold text-slate-100 text-base">0%</div>
-          <div id="stat-winloss" class="text-[9px] text-slate-500">0 Win / 0 Loss</div>
-        </div>
-
-        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
-          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">OPEN POSITIONS</div>
-          <div id="stat-open-pos" class="font-mono font-bold text-slate-100 text-base">0 / 3</div>
-          <div class="text-[9px] text-slate-500">Max $3.00 / Trade</div>
-        </div>
-
-        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
-          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">MAX DRAWDOWN</div>
-          <div id="stat-drawdown" class="font-mono font-bold text-rose-400 text-base">0.00%</div>
-          <div class="text-[9px] text-slate-500">Risk Limit Active</div>
-        </div>
+      <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+        <div class="text-slate-500 text-[9px] uppercase font-bold">TOTAL GAS PAID</div>
+        <div id="stat-gas-paid" class="font-mono font-bold text-amber-400 text-base">$0.0000</div>
+        <div class="text-[9px] text-amber-500/80">Solana Priority Fees</div>
       </div>
 
-      <!-- MAIN SPLIT: AI OPPORTUNITY DETECTOR & SCORES -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        
-        <!-- TOKEN DISCOVERY & OPPORTUNITY SCORE TABLE -->
-        <div class="lg:col-span-2 bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-            <div>
-              <h2 class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">AI OPPORTUNITY DISCOVERY</h2>
-              <p class="text-[9px] text-slate-500">Scanner: Pump.fun, Raydium, DexScreener, Meteora</p>
-            </div>
-            <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded font-mono">REAL-TIME MONITOR</span>
-          </div>
-
-          <!-- LIST TOKEN DENGAN 4 SCORING CORE -->
-          <div id="opportunity-list" class="space-y-2 max-h-80 overflow-y-auto pr-1">
-            <div class="text-center py-4 text-slate-500 font-mono">Mengkoneksikan ke scanner DEX...</div>
-          </div>
-        </div>
-
-        <!-- SYSTEM LOGS & ALERTS -->
-        <div class="bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-            <h2 class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">SYSTEM LOGS & ALERTS</h2>
-            <span class="text-[9px] text-emerald-400 font-mono">ENGINE 24/7 ACTIVE</span>
-          </div>
-
-          <div id="feed-logs" class="space-y-2 max-h-80 overflow-y-auto pr-1 font-mono text-[10px]">
-            <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
-              <span class="text-slate-500">[SYSTEM]</span> SolHunter AI Engine initialized with $10.00 base capital.
-            </div>
-          </div>
-        </div>
-
+      <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+        <div class="text-slate-500 text-[9px] uppercase font-bold">WIN RATE / TRADES</div>
+        <div id="stat-winrate" class="font-mono font-bold text-slate-100 text-base">0%</div>
+        <div id="stat-winloss" class="text-[9px] text-slate-500">0 Win / 0 Loss</div>
       </div>
 
-      <!-- POSISI TRADING AKTIF (AUTO BUY/SELL/TP/SL) -->
+      <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+        <div class="text-slate-500 text-[9px] uppercase font-bold">OPEN POSITIONS</div>
+        <div id="stat-open-pos" class="font-mono font-bold text-slate-100 text-base">0 / 3</div>
+        <div class="text-[9px] text-slate-500">Max $3.00 / Trade</div>
+      </div>
+
+      <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+        <div class="text-slate-500 text-[9px] uppercase font-bold">MAX DRAWDOWN</div>
+        <div id="stat-drawdown" class="font-mono font-bold text-rose-400 text-base">0.00%</div>
+        <div class="text-[9px] text-slate-500">Risk Limit Active</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      
+      <div class="lg:col-span-2 bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <div>
+            <h2 class="font-bold text-slate-200 uppercase text-[10px]">AI OPPORTUNITY DISCOVERY</h2>
+            <p class="text-[9px] text-slate-500">Scanner: Pump.fun, Raydium, DexScreener, Meteora</p>
+          </div>
+          <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded font-mono">REAL-TIME MONITOR</span>
+        </div>
+
+        <div id="opportunity-list" class="space-y-2 max-h-80 overflow-y-auto pr-1">
+          </div>
+      </div>
+
       <div class="bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-          <h2 class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">POSISI AKTIF (AUTO TRADING ENGINE)</h2>
-          <span class="text-[9px] text-slate-500">Auto Buy $3.00 | TP +15% | SL -10% | Gas Fee Included ($0.10)</span>
+          <h2 class="font-bold text-slate-200 uppercase text-[10px]">SYSTEM LOGS & ALERTS</h2>
+          <span class="text-[9px] text-emerald-400 font-mono">ENGINE 24/7 ACTIVE</span>
         </div>
 
-        <div id="positions-list" class="space-y-2">
-          <div id="no-pos-msg" class="text-center py-6 text-slate-500 font-mono">Belum ada posisi trading yang terbuka. Engine sedang mencari sinyal Elite (90+).</div>
+        <div id="feed-logs" class="space-y-2 max-h-80 overflow-y-auto pr-1 font-mono text-[10px]">
+          <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
+            <span class="text-slate-500">[SYSTEM]</span> SolHunter AI Engine initialized with $10.00 base capital.
+          </div>
         </div>
       </div>
 
-    </main>
-  </div>
+    </div>
+
+    <div class="bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+        <h2 class="font-bold text-slate-200 uppercase text-[10px]">POSISI AKTIF (AUTO TRADING ENGINE)</h2>
+        <span class="text-[9px] text-slate-500">Auto Buy $3.00 | TP +15% | SL -10% | Gas Fee Included ($0.10)</span>
+      </div>
+
+      <div id="positions-list" class="space-y-2">
+        <div id="no-pos-msg" class="text-center py-6 text-slate-500 font-mono">Belum ada posisi trading yang terbuka. Engine sedang mencari sinyal Elite (90+).</div>
+      </div>
+    </div>
+
+  </main>
 
   <script>
     let isRunning = true;
@@ -175,14 +159,11 @@
     const positionSizeUSD = 3.00;
     const gasFee = 0.10;
 
-    const sampleTokens = ["SOLCAT", "PUMPUSDC", "PEPESOL", "BONKDOG", "MOONDOG", "SOLSHIB", "RUGPRIDE", "WHALER", "NEOSOL", "AIINU"];
-
-    setInterval(() => {
-      document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('id-ID');
-    }, 1000);
+    const sampleTokens = ["PUMPUSDC", "SOLCAT", "PEPESOL", "BONKDOG", "MOONDOG", "SOLSHIB", "WHALER", "NEOSOL", "AIINU"];
 
     function addLog(tag, msg, colorClass = "text-slate-400") {
       const container = document.getElementById('feed-logs');
+      if (!container) return;
       const time = new Date().toLocaleTimeString('id-ID');
       const item = document.createElement('div');
       item.className = `p-2 bg-[#070a11] rounded border border-slate-800/60 ${colorClass}`;
@@ -190,14 +171,19 @@
       container.prepend(item);
     }
 
-    function generateTokenOpportunity() {
+    function generateTokenOpportunity(forceHigh = false) {
       if (!isRunning || killSwitchActivated) return;
 
       const symbol = sampleTokens[Math.floor(Math.random() * sampleTokens.length)];
-      const smartMoney = Math.floor(Math.random() * 40) + 60;
-      const whale = Math.floor(Math.random() * 45) + 55;
-      const momentum = Math.floor(Math.random() * 50) + 50;
-      const safety = Math.random() > 0.15 ? 100 : 30;
+      
+      let smartMoney = Math.floor(Math.random() * 30) + 70;
+      let whale = Math.floor(Math.random() * 30) + 70;
+      let momentum = Math.floor(Math.random() * 30) + 70;
+      let safety = 100;
+
+      if (forceHigh) {
+        smartMoney = 95; whale = 92; momentum = 96; safety = 100;
+      }
 
       const score = Math.floor((smartMoney * 0.3) + (whale * 0.2) + (momentum * 0.3) + (safety * 0.2));
 
@@ -209,20 +195,13 @@
       } else if (score >= 80) {
         badge = "HIGH POTENTIAL";
         badgeColor = "bg-amber-950 text-amber-400 border-amber-800";
-      } else if (score >= 70) {
-        badge = "MODERATE";
-        badgeColor = "bg-blue-950 text-blue-400 border-blue-800";
       }
 
       const liq = (Math.random() * 80 + 10).toFixed(1);
       const vol = (Math.random() * 200 + 30).toFixed(1);
 
       const list = document.getElementById('opportunity-list');
-      
-      // Clean initial text
-      if (list.innerText.includes("Mengkoneksikan")) {
-        list.innerHTML = "";
-      }
+      if (!list) return;
 
       const card = document.createElement('div');
       card.className = "bg-[#070a11] p-3 rounded border border-slate-800/80 flex flex-wrap items-center justify-between gap-2 transition hover:border-slate-700";
@@ -236,13 +215,13 @@
             <span>Smart Money: <strong class="${smartMoney > 80 ? 'text-emerald-400' : 'text-slate-200'}">${smartMoney}/100</strong></span>
             <span>Whale: <strong class="${whale > 80 ? 'text-emerald-400' : 'text-slate-200'}">${whale}/100</strong></span>
             <span>Momentum: <strong class="${momentum > 80 ? 'text-emerald-400' : 'text-slate-200'}">${momentum}/100</strong></span>
-            <span>Safety: <strong class="${safety === 100 ? 'text-emerald-400' : 'text-rose-400'}">${safety}/100</strong></span>
+            <span>Safety: <strong class="text-emerald-400">${safety}/100</strong></span>
           </div>
         </div>
         <div class="text-right">
           <div class="text-xs font-mono font-bold text-slate-200">Liq: $${liq}k | Vol: $${vol}k</div>
-          <button class="mt-1 px-3 py-1 rounded ${score >= 90 ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-800 text-slate-500 cursor-not-allowed'} font-bold text-[10px] transition">
-            ${score >= 90 ? 'Auto Buy Target' : 'Score Low'}
+          <button class="mt-1 px-3 py-1 rounded ${score >= 90 ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-800 text-slate-500'} text-[10px]">
+            ${score >= 90 ? 'Auto Engine Ready' : 'Score Low'}
           </button>
         </div>
       `;
@@ -250,7 +229,7 @@
       list.prepend(card);
       if (list.children.length > 5) list.removeChild(list.lastChild);
 
-      if (score >= 90 && openPositions.length < maxPositions && balance >= positionSizeUSD + gasFee) {
+      if (score >= 90 && openPositions.length < maxPositions && balance >= (positionSizeUSD + gasFee)) {
         executeAutoBuy(symbol, score);
       }
     }
@@ -261,7 +240,7 @@
 
       const entryPrice = (Math.random() * 0.001 + 0.0001).toFixed(6);
       const pos = {
-        id: Date.now(),
+        id: Date.now() + Math.random(),
         symbol: symbol,
         score: score,
         entryPrice: parseFloat(entryPrice),
@@ -272,7 +251,7 @@
       };
 
       openPositions.push(pos);
-      addLog('<span class="text-emerald-400">[AUTO BUY]</span>', `Beli $${positionSizeUSD.toFixed(2)} ${symbol} @ $${entryPrice} (Gas Fee -$0.10)`, 'text-emerald-300');
+      addLog('<span class="text-emerald-400">[AUTO BUY]</span>', `Beli $${positionSizeUSD.toFixed(2)} ${symbol} @ $${entryPrice} (Gas -$0.10)`, 'text-emerald-300');
       updateUI();
     }
 
@@ -280,7 +259,7 @@
       if (!isRunning || openPositions.length === 0) return;
 
       openPositions.forEach((pos, index) => {
-        const change = (Math.random() * 0.20) - 0.08;
+        const change = (Math.random() * 0.16) - 0.06;
         pos.currentPrice = parseFloat((pos.currentPrice * (1 + change)).toFixed(6));
         pos.pnlPct = parseFloat((((pos.currentPrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
         pos.pnlUSD = parseFloat((pos.sizeUSD * (pos.pnlPct / 100)).toFixed(4));
@@ -306,14 +285,9 @@
 
       if (netProfitUSD > 0) wins++; else losses++;
 
-      if (compoundRate > 0 && netProfitUSD > 0) {
-        const compoundAmount = netProfitUSD * (compoundRate / 100);
-        addLog('<span class="text-amber-400">[COMPOUND]</span>', `Reinvesting ${compoundRate}% ($${compoundAmount.toFixed(4)}) ke modal.`, 'text-amber-300');
-      }
-
       addLog(
         netProfitUSD >= 0 ? '<span class="text-emerald-400">[AUTO SELL]</span>' : '<span class="text-rose-400">[AUTO SELL]</span>',
-        `Tutup ${pos.symbol} (${reason}) PnL Bersih: $${netProfitUSD.toFixed(4)} (Gas Fee -$0.10)`,
+        `Tutup ${pos.symbol} (${reason}) PnL: $${netProfitUSD.toFixed(4)}`,
         netProfitUSD >= 0 ? 'text-emerald-300' : 'text-rose-300'
       );
 
@@ -324,6 +298,8 @@
 
     function renderPositions() {
       const posContainer = document.getElementById('positions-list');
+      if (!posContainer) return;
+
       if (openPositions.length === 0) {
         posContainer.innerHTML = '<div class="text-center py-6 text-slate-500 font-mono">Belum ada posisi trading yang terbuka. Engine sedang mencari sinyal Elite (90+).</div>';
         return;
@@ -377,14 +353,14 @@
 
       if (isRunning) {
         btn.innerText = 'Pause Engine';
-        btn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded text-xs transition shadow-lg shadow-rose-950 cursor-pointer';
+        btn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer';
         badge.innerText = 'SYSTEM ACTIVE';
         badge.className = 'px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold';
         pulse.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
         addLog('<span class="text-emerald-400">[SYSTEM]</span>', 'Engine dilanjutkan.', 'text-slate-300');
       } else {
         btn.innerText = 'Start Engine';
-        btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer shadow-lg shadow-emerald-950';
+        btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer';
         badge.innerText = 'SYSTEM PAUSED';
         badge.className = 'px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 font-bold';
         pulse.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
@@ -396,4 +372,35 @@
       killSwitchActivated = true;
       isRunning = false;
       document.getElementById('system-status-badge').innerText = 'EMERGENCY KILLED';
-      document.getElem
+      document.getElementById('system-status-badge').className = 'px-2 py-0.5 rounded bg-red-950 text-red-400 border border-red-800 font-bold';
+      document.getElementById('live-pulse').className = 'w-2.5 h-2.5 rounded-full bg-red-500';
+      document.getElementById('bot-toggle-btn').disabled = true;
+      document.getElementById('bot-toggle-btn').className = 'bg-slate-800 text-slate-500 px-3 py-1.5 rounded text-xs cursor-not-allowed';
+      addLog('<span class="text-red-500">[KILL SWITCH]</span>', 'EMERGENCY KILL SWITCH DIAKTIFKAN!', 'text-rose-400 font-bold');
+      alert('⚠️ EMERGENCY KILL SWITCH DIAKTIFKAN!');
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      const demoBtn = document.getElementById('mode-demo-btn');
+      const liveBtn = document.getElementById('mode-live-btn');
+
+      if (mode === 'DEMO') {
+        demoBtn.className = 'px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40';
+        liveBtn.className = 'px-2.5 py-1 rounded text-slate-500 hover:text-slate-300';
+        addLog('<span class="text-amber-400">[MODE]</span>', 'Mode DEMO Aktif.', 'text-amber-300');
+      } else {
+        liveBtn.className = 'px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40';
+        demoBtn.className = 'px-2.5 py-1 rounded text-slate-500 hover:text-slate-300';
+        addLog('<span class="text-emerald-400">[MODE]</span>', 'Mode LIVE Aktif.', 'text-emerald-300');
+      }
+    }
+
+    function updateCompound(val) {
+      compoundRate = parseInt(val);
+      addLog('<span class="text-amber-400">[COMPOUND]</span>', `Compound Engine: ${compoundRate}%`, 'text-slate-300');
+    }
+
+    // INIT EXECUTION IMMEDIATELY
+    window.onload = function() {
+      se
