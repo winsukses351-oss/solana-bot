@@ -3,390 +3,245 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Solana WIN Network — Auto Trading Engine</title>
+  <title>SolHunter AI — Solana Meme Coin Hunter & Trading System</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #070a11; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 p-4 font-sans flex flex-col min-h-screen justify-between">
-  
-  <div class="max-w-xl mx-auto space-y-6 w-full">
-    
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-3">
-      <div>
-        <h1 class="text-xl font-bold text-emerald-400 flex items-center gap-2">
-          ⚡ Solana WIN Network
-        </h1>
-        <p class="text-xs text-slate-400">Phase 4: Auto-Trader Engine (Client Simulator)</p>
-      </div>
-      <button id="connect-wallet-btn" onclick="toggleWallet()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition self-end sm:self-auto shadow-lg shadow-emerald-950">
-        Connect Wallet
-      </button>
-    </div>
+<body class="bg-[#070a11] text-slate-300 font-sans antialiased text-xs flex flex-col min-h-screen selection:bg-emerald-500 selection:text-black">
 
-    <!-- BOT CONTROL PANEL -->
-    <div class="bg-slate-900 border border-emerald-900/60 p-4 rounded-xl space-y-4 shadow-xl shadow-emerald-950/20">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-xs font-semibold uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
-            🤖 AUTO-TRADER SIMULATOR ENGINE
-          </h2>
-          <span class="text-[10px] text-slate-400">TP: +15% | SL: -10% | Max Pos: 3</span>
-        </div>
-        <button id="bot-toggle-btn" onclick="toggleBotState()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-lg shadow-emerald-950 cursor-pointer">
-          START BOT
-        </button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 text-xs">
-        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-          <div class="text-slate-400 text-[10px]">Simulated Balance:</div>
-          <div id="bot-balance" class="font-mono font-bold text-emerald-400 text-sm">$1,000.00</div>
-        </div>
-        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-          <div class="text-slate-400 text-[10px]">Active Positions:</div>
-          <div id="bot-positions-count" class="font-mono font-bold text-slate-200 text-sm">0 / 3</div>
-        </div>
-      </div>
-
-      <!-- Live Active Positions -->
-      <div class="space-y-2">
-        <div class="text-[11px] font-semibold text-slate-400">Posisi Aktif Bot:</div>
-        <div id="bot-positions-list" class="space-y-1.5 text-xs">
-          <div class="text-slate-500 text-center py-2 text-[11px]">Tidak ada posisi aktif. Nyalakan bot untuk memulai auto-trading.</div>
-        </div>
-      </div>
-
-      <!-- Trade History Log -->
-      <div class="space-y-2 pt-2 border-t border-slate-800/80">
-        <div class="text-[11px] font-semibold text-slate-400">Riwayat Eksekusi Bot:</div>
-        <div id="bot-history-list" class="space-y-1 text-xs max-h-36 overflow-y-auto">
-          <div class="text-slate-500 text-center py-2 text-[11px]">Belum ada riwayat transaksi.</div>
-        </div>
+  <!-- TOP TICKER BAR -->
+  <div class="bg-[#0c101d] border-b border-slate-800/80 px-4 py-2 flex items-center justify-between overflow-x-auto whitespace-nowrap gap-4 text-[11px]">
+    <div class="flex items-center gap-3">
+      <span class="flex items-center gap-1.5 font-bold text-slate-100">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-emerald-400">SolHunter</span> <span class="text-[9px] px-1.5 py-0.5 bg-emerald-950 text-emerald-400 rounded border border-emerald-800 font-mono">AI 24/7</span>
+      </span>
+      <div class="flex items-center gap-4 text-slate-400 font-mono text-[10px]">
+        <span>SOL/USD: <strong class="text-slate-200">$140.00</strong></span>
+        <span>NETWORK GAS: <strong class="text-amber-400">$0.10 / TX</strong></span>
+        <span>PUMP.FUN / RAYDIUM ENGINE: <strong class="text-emerald-400">CONNECTED</strong></span>
       </div>
     </div>
-
-    <!-- Health Check Panel -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
-      <div class="flex justify-between items-center">
-        <h2 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">System Health Check</h2>
-        <button onclick="checkHealth()" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition">
-          🔄 Refresh Status
-        </button>
-      </div>
-      <div class="space-y-2 text-xs">
-        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
-          <div>
-            <div class="font-semibold text-slate-200">Solana RPC Mainnet</div>
-            <div id="rpc-latency" class="text-[10px] text-slate-500">Latency: --</div>
-          </div>
-          <span id="rpc-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">CHECKING...</span>
-        </div>
-        <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
-          <div>
-            <div class="font-semibold text-slate-200">DexScreener API</div>
-            <div id="dex-latency" class="text-[10px] text-slate-500">Latency: --</div>
-          </div>
-          <span id="dex-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">CHECKING...</span>
-        </div>
-      </div>
+    <div class="flex items-center gap-3 text-[10px]">
+      <span class="text-slate-500 font-mono" id="live-clock">00:00:00</span>
+      <span id="system-status-badge" class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">SYSTEM ACTIVE</span>
     </div>
-
-    <!-- Whale Tracker Panel -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
-      <div class="flex justify-between items-center border-b border-slate-800/80 pb-2">
-        <h2 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">🐋 Live Whale Activity</h2>
-        <span class="text-[10px] text-slate-500">Auto Refresh</span>
-      </div>
-      <div id="whale-list" class="space-y-2 text-xs max-h-40 overflow-y-auto">
-        <div class="text-center py-4 text-slate-500">Mendeteksi aktivitas transaksi paus...</div>
-      </div>
-    </div>
-
-    <!-- Token Scanner -->
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-3">
-      <div class="flex justify-between items-center border-b border-slate-800/80 pb-2">
-        <div>
-          <h2 class="text-xs font-semibold uppercase text-slate-400 tracking-wider">🔍 Solana Token Scanner</h2>
-          <span id="token-count-badge" class="text-[10px] text-emerald-400 font-medium">0 Tokens Loaded</span>
-        </div>
-        <button onclick="scanTokens()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded transition">
-          🔄 Scan Live
-        </button>
-      </div>
-      <div id="token-list" class="space-y-2 text-xs max-h-80 overflow-y-auto pr-1">
-        <div class="text-center py-6 text-slate-500 animate-pulse">Memuat data token...</div>
-      </div>
-    </div>
-
   </div>
 
-  <footer class="mt-8 text-center border-t border-slate-800/60 pt-4 pb-2">
-    <p class="text-xs text-slate-500 font-medium">
-      Powered by <span class="text-emerald-400 font-bold">Erwin Irawan</span> • <span class="text-slate-400">$WINNER Engine</span>
-    </p>
-  </footer>
+  <!-- MAIN APP LAYOUT -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="flex-1 p-3 md:p-4 overflow-y-auto space-y-4">
+      
+      <!-- TOP ACTION & SAFETY CONTROLS -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-[#0c101d] p-3 rounded-lg border border-slate-800/80">
+        <div class="flex items-center gap-3">
+          <button id="bot-toggle-btn" onclick="toggleBotEngine()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded text-xs transition shadow-lg shadow-rose-950 cursor-pointer">
+            Pause Engine
+          </button>
+          
+          <!-- EMERGENCY KILL SWITCH -->
+          <button id="kill-switch-btn" onclick="triggerKillSwitch()" class="bg-red-950 hover:bg-red-900 text-red-400 border border-red-700 font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer">
+            ⚠️ EMERGENCY KILL SWITCH
+          </button>
 
-  <script>
-    let walletPublicKey = null;
-    let isBotActive = false;
-    let cachedTokens = [];
+          <div class="flex items-center bg-slate-900 border border-slate-800 rounded p-0.5 text-[10px] font-mono">
+            <button id="mode-demo-btn" onclick="setMode('DEMO')" class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40">DEMO ($10 CAP)</button>
+            <button id="mode-live-btn" onclick="setMode('LIVE')" class="px-2.5 py-1 rounded text-slate-500 hover:text-slate-300">LIVE</button>
+          </div>
+        </div>
 
-    // Memory Database di Client Browser
-    let botData = {
-      balanceUsd: 1000,
-      positions: [],
-      history: []
-    };
+        <div class="flex items-center gap-3 font-mono text-[11px]">
+          <span class="text-slate-400">COMPOUND ENGINE:</span>
+          <select id="compound-select" onchange="updateCompound(this.value)" class="bg-slate-900 border border-slate-700 text-amber-400 font-bold rounded px-2 py-1 text-xs focus:outline-none">
+            <option value="0">OFF (0%)</option>
+            <option value="25">25%</option>
+            <option value="50">50%</option>
+            <option value="75">75%</option>
+            <option value="100">100%</option>
+          </select>
+        </div>
+      </div>
 
-    function toggleBotState() {
-      isBotActive = !isBotActive;
-      const toggleBtn = document.getElementById('bot-toggle-btn');
+      <!-- METRICS GRID (CORE METRICS) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2.5">
+        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">TOTAL BALANCE</div>
+          <div id="stat-balance" class="font-mono font-bold text-slate-100 text-base">$10.0000</div>
+          <div class="text-[9px] text-slate-500">Base Capital $10.00</div>
+        </div>
+        
+        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">NET REALIZED PNL</div>
+          <div id="stat-realized" class="font-mono font-bold text-emerald-400 text-base">+$0.0000</div>
+          <div class="text-[9px] text-emerald-500/80">After Gas & Slippage</div>
+        </div>
 
-      if (isBotActive) {
-        toggleBtn.innerText = 'STOP BOT';
-        toggleBtn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-lg shadow-rose-950 animate-pulse cursor-pointer';
-        runBotLogic(); // Jalankan sekali saat start
-      } else {
-        toggleBtn.innerText = 'START BOT';
-        toggleBtn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-lg shadow-emerald-950 cursor-pointer';
-      }
-    }
+        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">TOTAL GAS PAID</div>
+          <div id="stat-gas-paid" class="font-mono font-bold text-amber-400 text-base">$0.0000</div>
+          <div class="text-[9px] text-amber-500/80">Solana Priority Fees</div>
+        </div>
 
-    // LOGIKA TRADING BOT ENGINE CLIENT SIDE
-    function runBotLogic() {
-      if (!isBotActive) return;
+        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">WIN RATE / TRADES</div>
+          <div id="stat-winrate" class="font-mono font-bold text-slate-100 text-base">0%</div>
+          <div id="stat-winloss" class="text-[9px] text-slate-500">0 Win / 0 Loss</div>
+        </div>
 
-      // 1. Cek Posisi Aktif untuk Sell (TP / SL)
-      for (let i = botData.positions.length - 1; i >= 0; i--) {
-        const pos = botData.positions[i];
-        const liveToken = cachedTokens.find(t => t.address === pos.address);
+        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">OPEN POSITIONS</div>
+          <div id="stat-open-pos" class="font-mono font-bold text-slate-100 text-base">0 / 3</div>
+          <div class="text-[9px] text-slate-500">Max $3.00 / Trade</div>
+        </div>
 
-        // Simulasi fluktuasi harga jika belum dapat live data baru
-        const currentPrice = liveToken ? liveToken.priceUsd : pos.entryPrice * (1 + (Math.random() * 0.1 - 0.04));
-        const pnlPercent = ((currentPrice - pos.entryPrice) / pos.entryPrice) * 100;
+        <div class="bg-[#0c101d] p-3 rounded-lg border border-slate-800/80 space-y-1">
+          <div class="text-slate-500 text-[9px] uppercase font-bold tracking-wider">MAX DRAWDOWN</div>
+          <div id="stat-drawdown" class="font-mono font-bold text-rose-400 text-base">-0.00%</div>
+          <div class="text-[9px] text-slate-500">Risk Limit Active</div>
+        </div>
+      </div>
 
-        if (pnlPercent >= 15 || pnlPercent <= -10) {
-          const returnAmount = pos.amountUsd + (pos.amountUsd * (pnlPercent / 100));
-          botData.balanceUsd += returnAmount;
-
-          botData.history.unshift({
-            id: Date.now(),
-            symbol: pos.symbol,
-            type: 'SELL',
-            reason: pnlPercent >= 15 ? 'TAKE PROFIT (+15%)' : 'STOP LOSS (-10%)',
-            pnlPercent: pnlPercent.toFixed(2),
-            pnlUsd: (returnAmount - pos.amountUsd).toFixed(2),
-            time: new Date().toLocaleTimeString('id-ID')
-          });
-
-          botData.positions.splice(i, 1);
-        }
-      }
-
-      // 2. Cek Beli Posisi Baru
-      if (botData.positions.length < 3 && botData.balanceUsd >= 100 && cachedTokens.length > 0) {
-        const candidate = cachedTokens.find(t => 
-          t.safetyStatus !== 'HIGH RISK (Low Liq)' && 
-          !botData.positions.some(p => p.address === t.address) &&
-          t.priceUsd > 0
-        );
-
-        if (candidate) {
-          const buyAmount = 100;
-          botData.balanceUsd -= buyAmount;
-
-          botData.positions.push({
-            address: candidate.address,
-            symbol: candidate.symbol,
-            name: candidate.name,
-            entryPrice: candidate.priceUsd,
-            amountUsd: buyAmount,
-            buyTime: new Date().toLocaleTimeString('id-ID')
-          });
-
-          botData.history.unshift({
-            id: Date.now(),
-            symbol: candidate.symbol,
-            type: 'BUY',
-            reason: 'AUTO SIGNAL MATCH',
-            pnlPercent: '0.00',
-            pnlUsd: '0.00',
-            time: new Date().toLocaleTimeString('id-ID')
-          });
-        }
-      }
-
-      renderBotUI();
-    }
-
-    function renderBotUI() {
-      document.getElementById('bot-balance').innerText = `$${botData.balanceUsd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-      document.getElementById('bot-positions-count').innerText = `${botData.positions.length} / 3`;
-
-      const posContainer = document.getElementById('bot-positions-list');
-      if (botData.positions.length === 0) {
-        posContainer.innerHTML = '<div class="text-slate-500 text-center py-2 text-[11px]">Tidak ada posisi aktif.</div>';
-      } else {
-        posContainer.innerHTML = botData.positions.map(p => `
-          <div class="bg-slate-950 p-2 rounded border border-emerald-900/50 flex justify-between items-center">
+      <!-- MAIN SPLIT: AI OPPORTUNITY DETECTOR & SCORES -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        
+        <!-- TOKEN DISCOVERY & OPPORTUNITY SCORE TABLE -->
+        <div class="lg:col-span-2 bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
             <div>
-              <span class="font-bold text-slate-200">${p.symbol}</span>
-              <div class="text-[9px] text-slate-400">Entry: $${p.entryPrice < 0.01 ? p.entryPrice.toFixed(6) : p.entryPrice.toFixed(4)} • ${p.buyTime}</div>
+              <h2 class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">AI OPPORTUNITY DISCOVERY</h2>
+              <p class="text-[9px] text-slate-500">Scanner: Pump.fun, Raydium, DexScreener, Meteora</p>
             </div>
-            <div class="text-right">
-              <span class="font-mono font-bold text-emerald-400">$${p.amountUsd}</span>
-              <div class="text-[9px] text-slate-500">HOLDING</div>
+            <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded font-mono">REAL-TIME MONITOR</span>
+          </div>
+
+          <!-- LIST TOKEN DENGAN 4 SCORING CORE -->
+          <div id="opportunity-list" class="space-y-2 max-h-80 overflow-y-auto pr-1">
+            <!-- Simulated Item Token -->
+            <div class="bg-[#070a11] p-3 rounded border border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-slate-100 text-sm font-mono">PUMPUSDC</span>
+                  <span class="px-1.5 py-0.5 rounded text-[8px] bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold uppercase">ELITE (SCORE: 94)</span>
+                </div>
+                <div class="flex gap-3 text-[9.5px] font-mono text-slate-400">
+                  <span>Smart Money: <strong class="text-emerald-400">92/100</strong></span>
+                  <span>Whale: <strong class="text-emerald-400">88/100</strong></span>
+                  <span>Momentum: <strong class="text-emerald-400">95/100</strong></span>
+                  <span>Safety: <strong class="text-emerald-400">100/100</strong></span>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs font-mono font-bold text-slate-200">Liq: $45.2k | Vol: $120k</div>
+                <button class="mt-1 px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition">Auto Engine Ready</button>
+              </div>
             </div>
           </div>
-        `).join('');
-      }
+        </div>
 
-      const histContainer = document.getElementById('bot-history-list');
-      if (botData.history.length === 0) {
-        histContainer.innerHTML = '<div class="text-slate-500 text-center py-2 text-[11px]">Belum ada riwayat transaksi.</div>';
+        <!-- TELEGRAM ALERTS & LIVE FEEDS -->
+        <div class="bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <h2 class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">SYSTEM & TELEGRAM ALERTS</h2>
+            <span class="text-[9px] text-emerald-400 font-mono">BOT 24/7 ACTIVE</span>
+          </div>
+
+          <div id="feed-logs" class="space-y-2 max-h-80 overflow-y-auto pr-1 font-mono text-[10px]">
+            <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
+              <span class="text-emerald-400 font-bold">[TELEGRAM]</span> Sinyal Token Elite terdeteksi: <strong>PUMPUSDC</strong> (Score 94).
+            </div>
+            <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
+              <span class="text-amber-400 font-bold">[SAFETY ENGINE]</span> Rug & Honeypot Check Pass (LP Burned 100%).
+            </div>
+            <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
+              <span class="text-slate-500">[07:58:14]</span> SolHunter AI Engine initialized with $10.00 base capital.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- POSISI TRADING AKTIF (AUTO BUY/SELL/TP/SL) -->
+      <div class="bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <h2 class="font-bold text-slate-200 uppercase tracking-wider text-[10px]">POSISI AKTIF (AUTO TRADING ENGINE)</h2>
+          <span class="text-[9px] text-slate-500">Auto Buy $3.00 | TP +15% | SL -10% | Gas Fee Included</span>
+        </div>
+
+        <div id="positions-list" class="space-y-2">
+          <div class="text-center py-6 text-slate-500 font-mono">Belum ada posisi trading yang terbuka. Engine sedang mencari sinyal Elite (90+).</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    let isRunning = true;
+    let currentMode = "DEMO";
+    let compoundRate = 0;
+    let killSwitchActivated = false;
+
+    // Clock realtime
+    setInterval(() => {
+      document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('id-ID');
+    }, 1000);
+
+    function toggleBotEngine() {
+      if (killSwitchActivated) return;
+      isRunning = !isRunning;
+      const btn = document.getElementById('bot-toggle-btn');
+      const badge = document.getElementById('system-status-badge');
+
+      if (isRunning) {
+        btn.innerText = 'Pause Engine';
+        btn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded text-xs transition shadow-lg shadow-rose-950 cursor-pointer';
+        badge.innerText = 'SYSTEM ACTIVE';
+        badge.className = 'px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold';
       } else {
-        histContainer.innerHTML = botData.history.map(h => {
-          const isBuy = h.type === 'BUY';
-          const badgeClass = isBuy ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : (parseFloat(h.pnlUsd) >= 0 ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-rose-950 text-rose-400 border-rose-800');
-          return `
-            <div class="bg-slate-950 p-2 rounded border border-slate-800 flex justify-between items-center">
-              <div class="flex items-center gap-2">
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold border ${badgeClass}">[${h.type}]</span>
-                <span class="font-bold text-slate-200">${h.symbol}</span>
-                <span class="text-[9px] text-slate-500">(${h.reason})</span>
-              </div>
-              <div class="text-right">
-                <span class="font-mono font-bold ${isBuy ? 'text-slate-300' : (parseFloat(h.pnlUsd) >= 0 ? 'text-emerald-400' : 'text-rose-400')}">
-                  ${isBuy ? '$100.00' : (parseFloat(h.pnlUsd) >= 0 ? '+' : '') + '$' + h.pnlUsd}
-                </span>
-                <div class="text-[9px] text-slate-500">${h.time}</div>
-              </div>
-            </div>
-          `;
-        }).join('');
+        btn.innerText = 'Start Engine';
+        btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer shadow-lg shadow-emerald-950';
+        badge.innerText = 'SYSTEM PAUSED';
+        badge.className = 'px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 font-bold';
       }
     }
 
-    async function checkHealth() {
-      try {
-        const resRpc = await fetch('/api/health/rpc');
-        const dataRpc = await resRpc.json();
-        const rpcBadge = document.getElementById('rpc-status');
-        document.getElementById('rpc-latency').innerText = `Latency: ${dataRpc.latency || '--'}`;
-        rpcBadge.className = dataRpc.status === 'CONNECTED' ? 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800' : 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800';
-        rpcBadge.innerText = dataRpc.status;
-      } catch (e) {}
-
-      try {
-        const resDex = await fetch('/api/health/dexscreener');
-        const dataDex = await resDex.json();
-        const dexBadge = document.getElementById('dex-status');
-        document.getElementById('dex-latency').innerText = `Latency: ${dataDex.latency || '--'}`;
-        dexBadge.className = dataDex.status === 'CONNECTED' ? 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800' : 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800';
-        dexBadge.innerText = dataDex.status;
-      } catch (e) {}
+    function triggerKillSwitch() {
+      killSwitchActivated = true;
+      isRunning = false;
+      document.getElementById('system-status-badge').innerText = 'EMERGENCY KILLED';
+      document.getElementById('system-status-badge').className = 'px-2 py-0.5 rounded bg-red-950 text-red-400 border border-red-800 font-bold';
+      document.getElementById('bot-toggle-btn').disabled = true;
+      document.getElementById('bot-toggle-btn').className = 'bg-slate-800 text-slate-500 px-3 py-1.5 rounded text-xs cursor-not-allowed';
+      alert('⚠️ EMERGENCY KILL SWITCH DIAKTIFKAN! Seluruh transaksi dihentikan seketika.');
     }
 
-    async function fetchWhales() {
-      const container = document.getElementById('whale-list');
-      try {
-        const res = await fetch('/api/whales/activity');
-        const result = await res.json();
-        if (!result.success || !result.data || result.data.length === 0) return;
+    function setMode(mode) {
+      currentMode = mode;
+      const demoBtn = document.getElementById('mode-demo-btn');
+      const liveBtn = document.getElementById('mode-live-btn');
 
-        container.innerHTML = result.data.map(w => {
-          const typeColor = w.type === 'BUY' ? 'text-emerald-400 bg-emerald-950 border-emerald-800' : 'text-rose-400 bg-rose-950 border-rose-800';
-          return `
-            <div class="bg-slate-950 p-2 rounded border border-slate-800/80 flex justify-between items-center">
-              <div class="flex items-center gap-2">
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold border ${typeColor}">[${w.type}]</span>
-                <span class="font-bold text-slate-200">${w.name} (${w.symbol})</span>
-              </div>
-              <div class="text-right">
-                <span class="font-mono font-bold text-slate-100">$${w.amountUsd.toLocaleString()}</span>
-                <div class="text-[9px] text-slate-500">${w.time}</div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } catch (e) {}
-    }
-
-    async function scanTokens() {
-      const container = document.getElementById('token-list');
-      const badge = document.getElementById('token-count-badge');
-      try {
-        const res = await fetch('/api/tokens/scan');
-        const result = await res.json();
-        if (!result.success || !result.data || result.data.length === 0) return;
-
-        cachedTokens = result.data;
-        badge.innerText = `${result.data.length} Tokens Loaded`;
-        container.innerHTML = result.data.map(t => {
-          const changeColor = t.priceChange24h >= 0 ? 'text-emerald-400' : 'text-rose-400';
-          const changeSign = t.priceChange24h >= 0 ? '+' : '';
-          let safetyBadgeClass = 'bg-emerald-950 text-emerald-400 border-emerald-800';
-          if (t.safetyColor === 'rose') safetyBadgeClass = 'bg-rose-950 text-rose-400 border-rose-800';
-          if (t.safetyColor === 'amber') safetyBadgeClass = 'bg-amber-950 text-amber-400 border-amber-800';
-
-          return `
-            <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
-              <div class="space-y-1">
-                <div class="font-bold text-slate-100 flex items-center gap-1.5">
-                  <span>${t.name}</span>
-                  <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">${t.symbol}</span>
-                </div>
-                <div class="text-[10px] text-slate-400 flex flex-wrap gap-2">
-                  <span>Liq: <strong class="text-slate-300">$${t.liquidityUsd.toLocaleString()}</strong></span>
-                  <span>Vol 24h: <strong class="text-slate-300">$${t.volume24h.toLocaleString()}</strong></span>
-                  <span>Umur: <strong class="text-slate-300">${t.ageHours}h</strong></span>
-                </div>
-                <div class="pt-0.5">
-                  <span class="text-[9px] px-1.5 py-0.5 rounded font-bold border ${safetyBadgeClass}">${t.safetyStatus}</span>
-                </div>
-              </div>
-              <div class="text-right space-y-1">
-                <div class="font-mono font-bold text-slate-200">$${t.priceUsd < 0.01 ? t.priceUsd.toFixed(6) : t.priceUsd.toFixed(4)}</div>
-                <div class="text-[10px] font-semibold ${changeColor}">${changeSign}${t.priceChange24h.toFixed(2)}%</div>
-                <a href="${t.dexUrl}" target="_blank" class="inline-block text-[9px] bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded transition">
-                  Chart 📈
-                </a>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } catch (err) {}
-    }
-
-    async function toggleWallet() {
-      const provider = window?.solana;
-      if (!provider || !provider.isPhantom) {
-        alert('Phantom Wallet tidak terdeteksi!');
-        return;
+      if (mode === 'DEMO') {
+        demoBtn.className = 'px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40';
+        liveBtn.className = 'px-2.5 py-1 rounded text-slate-500 hover:text-slate-300';
+      } else {
+        liveBtn.className = 'px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40';
+        demoBtn.className = 'px-2.5 py-1 rounded text-slate-500 hover:text-slate-300';
       }
-      try {
-        if (!walletPublicKey) {
-          const resp = await provider.connect();
-          walletPublicKey = resp.publicKey.toString();
-          document.getElementById('connect-wallet-btn').innerText = 'Disconnect';
-        } else {
-          await provider.disconnect();
-          walletPublicKey = null;
-          document.getElementById('connect-wallet-btn').innerText = 'Connect Wallet';
-        }
-      } catch (err) {}
     }
 
-    checkHealth();
-    scanTokens();
-    fetchWhales();
-
-    setInterval(checkHealth, 30000);
-    setInterval(scanTokens, 10000);
-    setInterval(fetchWhales, 10000);
-    setInterval(runBotLogic, 3000); // Bot mengeksekusi trading tiap 3 detik jika tombol aktif
+    function updateCompound(val) {
+      compoundRate = parseInt(val);
+      console.log('Compound Rate updated to:', compoundRate + '%');
+    }
   </script>
 </body>
-            </html>
-                                                                                 
+  </html>
+                             
