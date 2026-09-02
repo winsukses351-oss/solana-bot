@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>SolHunter AI — Solana Trading Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -36,7 +36,7 @@
   <main class="flex-1 p-3 space-y-3 max-w-7xl mx-auto w-full">
     
     <!-- ACTION CONTROLS -->
-    <div class="flex flex-wrap items-center justify-between gap-3 bg-[#0c101d] p-3 rounded-lg border border-slate-800/80">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#0c101d] p-3 rounded-lg border border-slate-800/80">
       <div class="flex flex-wrap items-center gap-2">
         <button id="bot-toggle-btn" onclick="toggleBotEngine()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded text-xs transition cursor-pointer">
           Pause Engine
@@ -52,7 +52,7 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2 font-mono text-[11px]">
+      <div class="flex items-center justify-between sm:justify-end gap-2 font-mono text-[11px] pt-2 sm:pt-0 border-t sm:border-0 border-slate-800">
         <span class="text-slate-400">COMPOUND ENGINE:</span>
         <select id="compound-select" onchange="updateCompound(this.value)" class="bg-slate-900 border border-slate-700 text-amber-400 font-bold rounded px-2 py-1 text-xs focus:outline-none">
           <option value="0">OFF (0%)</option>
@@ -116,8 +116,8 @@
           <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded font-mono">REAL-TIME MONITOR</span>
         </div>
 
-        <div id="opportunity-list" class="space-y-2 max-h-80 overflow-y-auto pr-1">
-          <!-- Item diinjeksi via JS -->
+        <div id="opportunity-list" class="space-y-2 min-h-[160px] max-h-80 overflow-y-auto pr-1">
+          <!-- Token cards injected via JS -->
         </div>
       </div>
 
@@ -128,7 +128,7 @@
           <span class="text-[9px] text-emerald-400 font-mono">ENGINE 24/7 ACTIVE</span>
         </div>
 
-        <div id="feed-logs" class="space-y-2 max-h-80 overflow-y-auto pr-1 font-mono text-[10px]">
+        <div id="feed-logs" class="space-y-2 min-h-[160px] max-h-80 overflow-y-auto pr-1 font-mono text-[10px]">
           <div class="p-2 bg-[#070a11] rounded border border-slate-800/60 text-slate-400">
             <span class="text-slate-500">[SYSTEM]</span> SolHunter AI Engine initialized with $10.00 base capital.
           </div>
@@ -139,12 +139,12 @@
 
     <!-- ACTIVE POSITIONS -->
     <div class="bg-[#0c101d] rounded-lg border border-slate-800/80 p-3 space-y-3">
-      <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/80 pb-2 gap-1">
         <h2 class="font-bold text-slate-200 uppercase text-[10px]">POSISI AKTIF (AUTO TRADING ENGINE)</h2>
         <span class="text-[9px] text-slate-500">Auto Buy $3.00 | TP +15% | SL -10% | Gas Fee Included ($0.10)</span>
       </div>
 
-      <div id="positions-list" class="space-y-2">
+      <div id="positions-list" class="space-y-2 min-h-[60px]">
         <div id="no-pos-msg" class="text-center py-6 text-slate-500 font-mono">Belum ada posisi trading yang terbuka. Engine sedang mencari sinyal Elite (90+).</div>
       </div>
     </div>
@@ -152,52 +152,53 @@
   </main>
 
   <script>
-    let isRunning = true;
-    let currentMode = "DEMO";
-    let compoundRate = 50;
-    let killSwitchActivated = false;
+    var isRunning = true;
+    var currentMode = "DEMO";
+    var compoundRate = 50;
+    var killSwitchActivated = false;
 
-    let baseCapital = 10.00;
-    let balance = 10.00;
-    let netRealizedPnL = 0.00;
-    let totalGasPaid = 0.00;
-    let wins = 0;
-    let losses = 0;
-    let openPositions = [];
-    const maxPositions = 3;
-    const positionSizeUSD = 3.00;
-    const gasFee = 0.10;
+    var baseCapital = 10.00;
+    var balance = 10.00;
+    var netRealizedPnL = 0.00;
+    var totalGasPaid = 0.00;
+    var wins = 0;
+    var losses = 0;
+    var openPositions = [];
+    var maxPositions = 3;
+    var positionSizeUSD = 3.00;
+    var gasFee = 0.10;
 
-    const sampleTokens = ["PUMPUSDC", "SOLCAT", "PEPESOL", "BONKDOG", "MOONDOG", "SOLSHIB", "WHALER", "NEOSOL", "AIINU"];
+    var sampleTokens = ["PUMPUSDC", "SOLCAT", "PEPESOL", "BONKDOG", "MOONDOG", "SOLSHIB", "WHALER", "NEOSOL", "AIINU"];
 
-    function addLog(tag, msg, colorClass = "text-slate-400") {
-      const container = document.getElementById('feed-logs');
+    function addLog(tag, msg, colorClass) {
+      if (!colorClass) colorClass = "text-slate-400";
+      var container = document.getElementById('feed-logs');
       if (!container) return;
-      const time = new Date().toLocaleTimeString('id-ID');
-      const item = document.createElement('div');
-      item.className = `p-2 bg-[#070a11] rounded border border-slate-800/60 ${colorClass}`;
-      item.innerHTML = `<span class="text-slate-500">[${time}]</span> <span class="font-bold">${tag}</span> ${msg}`;
+      var time = new Date().toLocaleTimeString('id-ID');
+      var item = document.createElement('div');
+      item.className = "p-2 bg-[#070a11] rounded border border-slate-800/60 " + colorClass;
+      item.innerHTML = '<span class="text-slate-500">[' + time + ']</span> <span class="font-bold">' + tag + '</span> ' + msg;
       container.prepend(item);
     }
 
-    function generateTokenOpportunity(forceHigh = false) {
+    function generateTokenOpportunity(forceHigh) {
       if (!isRunning || killSwitchActivated) return;
 
-      const symbol = sampleTokens[Math.floor(Math.random() * sampleTokens.length)];
+      var symbol = sampleTokens[Math.floor(Math.random() * sampleTokens.length)];
       
-      let smartMoney = Math.floor(Math.random() * 30) + 70;
-      let whale = Math.floor(Math.random() * 30) + 70;
-      let momentum = Math.floor(Math.random() * 30) + 70;
-      let safety = 100;
+      var smartMoney = Math.floor(Math.random() * 30) + 70;
+      var whale = Math.floor(Math.random() * 30) + 70;
+      var momentum = Math.floor(Math.random() * 30) + 70;
+      var safety = 100;
 
       if (forceHigh) {
         smartMoney = 95; whale = 92; momentum = 96; safety = 100;
       }
 
-      const score = Math.floor((smartMoney * 0.3) + (whale * 0.2) + (momentum * 0.3) + (safety * 0.2));
+      var score = Math.floor((smartMoney * 0.3) + (whale * 0.2) + (momentum * 0.3) + (safety * 0.2));
 
-      let badge = "AVOID";
-      let badgeColor = "bg-rose-950 text-rose-400 border-rose-800";
+      var badge = "AVOID";
+      var badgeColor = "bg-rose-950 text-rose-400 border-rose-800";
       if (score >= 90) {
         badge = "ELITE";
         badgeColor = "bg-emerald-950 text-emerald-400 border-emerald-800";
@@ -206,34 +207,33 @@
         badgeColor = "bg-amber-950 text-amber-400 border-amber-800";
       }
 
-      const liq = (Math.random() * 80 + 10).toFixed(1);
-      const vol = (Math.random() * 200 + 30).toFixed(1);
+      var liq = (Math.random() * 80 + 10).toFixed(1);
+      var vol = (Math.random() * 200 + 30).toFixed(1);
 
-      const list = document.getElementById('opportunity-list');
+      var list = document.getElementById('opportunity-list');
       if (!list) return;
 
-      const card = document.createElement('div');
+      var card = document.createElement('div');
       card.className = "bg-[#070a11] p-3 rounded border border-slate-800/80 flex flex-wrap items-center justify-between gap-2 transition hover:border-slate-700";
-      card.innerHTML = `
-        <div class="space-y-1">
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-slate-100 text-sm font-mono">${symbol}</span>
-            <span class="px-1.5 py-0.5 rounded text-[8px] ${badgeColor} border font-bold uppercase">${badge} (SCORE: ${score})</span>
-          </div>
-          <div class="flex flex-wrap gap-3 text-[9.5px] font-mono text-slate-400">
-            <span>Smart Money: <strong class="${smartMoney > 80 ? 'text-emerald-400' : 'text-slate-200'}">${smartMoney}/100</strong></span>
-            <span>Whale: <strong class="${whale > 80 ? 'text-emerald-400' : 'text-slate-200'}">${whale}/100</strong></span>
-            <span>Momentum: <strong class="${momentum > 80 ? 'text-emerald-400' : 'text-slate-200'}">${momentum}/100</strong></span>
-            <span>Safety: <strong class="text-emerald-400">${safety}/100</strong></span>
-          </div>
-        </div>
-        <div class="text-right">
-          <div class="text-xs font-mono font-bold text-slate-200">Liq: $${liq}k | Vol: $${vol}k</div>
-          <button class="mt-1 px-3 py-1 rounded ${score >= 90 ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-800 text-slate-500'} text-[10px]">
-            ${score >= 90 ? 'Auto Engine Ready' : 'Score Low'}
-          </button>
-        </div>
-      `;
+      card.innerHTML = 
+        '<div class="space-y-1">' +
+          '<div class="flex items-center gap-2">' +
+            '<span class="font-bold text-slate-100 text-sm font-mono">' + symbol + '</span>' +
+            '<span class="px-1.5 py-0.5 rounded text-[8px] ' + badgeColor + ' border font-bold uppercase">' + badge + ' (SCORE: ' + score + ')</span>' +
+          '</div>' +
+          '<div class="flex flex-wrap gap-3 text-[9.5px] font-mono text-slate-400">' +
+            '<span>Smart Money: <strong class="' + (smartMoney > 80 ? 'text-emerald-400' : 'text-slate-200') + '">' + smartMoney + '/100</strong></span>' +
+            '<span>Whale: <strong class="' + (whale > 80 ? 'text-emerald-400' : 'text-slate-200') + '">' + whale + '/100</strong></span>' +
+            '<span>Momentum: <strong class="' + (momentum > 80 ? 'text-emerald-400' : 'text-slate-200') + '">' + momentum + '/100</strong></span>' +
+            '<span>Safety: <strong class="text-emerald-400">' + safety + '/100</strong></span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="text-right">' +
+          '<div class="text-xs font-mono font-bold text-slate-200">Liq: $' + liq + 'k | Vol: $' + vol + 'k</div>' +
+          '<button class="mt-1 px-3 py-1 rounded ' + (score >= 90 ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-800 text-slate-500') + ' text-[10px]">' +
+            (score >= 90 ? 'Auto Engine Ready' : 'Score Low') +
+          '</button>' +
+        '</div>';
 
       list.prepend(card);
       if (list.children.length > 5) list.removeChild(list.lastChild);
@@ -247,8 +247,8 @@
       totalGasPaid += gasFee;
       balance -= (positionSizeUSD + gasFee);
 
-      const entryPrice = (Math.random() * 0.001 + 0.0001).toFixed(6);
-      const pos = {
+      var entryPrice = (Math.random() * 0.001 + 0.0001).toFixed(6);
+      var pos = {
         id: Date.now() + Math.random(),
         symbol: symbol,
         score: score,
@@ -260,15 +260,15 @@
       };
 
       openPositions.push(pos);
-      addLog('<span class="text-emerald-400">[AUTO BUY]</span>', `Beli $${positionSizeUSD.toFixed(2)} ${symbol} @ $${entryPrice} (Gas -$0.10)`, 'text-emerald-300');
+      addLog('<span class="text-emerald-400">[AUTO BUY]</span>', 'Beli $' + positionSizeUSD.toFixed(2) + ' ' + symbol + ' @ $' + entryPrice + ' (Gas -$0.10)', 'text-emerald-300');
       updateUI();
     }
 
     function updatePositionsEngine() {
       if (!isRunning || openPositions.length === 0) return;
 
-      openPositions.forEach((pos, index) => {
-        const change = (Math.random() * 0.16) - 0.06;
+      openPositions.forEach(function(pos, index) {
+        var change = (Math.random() * 0.16) - 0.06;
         pos.currentPrice = parseFloat((pos.currentPrice * (1 + change)).toFixed(6));
         pos.pnlPct = parseFloat((((pos.currentPrice - pos.entryPrice) / pos.entryPrice) * 100).toFixed(2));
         pos.pnlUSD = parseFloat((pos.sizeUSD * (pos.pnlPct / 100)).toFixed(4));
@@ -285,10 +285,10 @@
     }
 
     function closePosition(index, reason) {
-      const pos = openPositions[index];
+      var pos = openPositions[index];
       totalGasPaid += gasFee;
       
-      const netProfitUSD = pos.pnlUSD - gasFee;
+      var netProfitUSD = pos.pnlUSD - gasFee;
       balance += (pos.sizeUSD + pos.pnlUSD - gasFee);
       netRealizedPnL += netProfitUSD;
 
@@ -296,7 +296,7 @@
 
       addLog(
         netProfitUSD >= 0 ? '<span class="text-emerald-400">[AUTO SELL]</span>' : '<span class="text-rose-400">[AUTO SELL]</span>',
-        `Tutup ${pos.symbol} (${reason}) PnL: $${netProfitUSD.toFixed(4)}`,
+        'Tutup ' + pos.symbol + ' (' + reason + ') PnL: $' + netProfitUSD.toFixed(4),
         netProfitUSD >= 0 ? 'text-emerald-300' : 'text-rose-300'
       );
 
@@ -306,7 +306,7 @@
     }
 
     function renderPositions() {
-      const posContainer = document.getElementById('positions-list');
+      var posContainer = document.getElementById('positions-list');
       if (!posContainer) return;
 
       if (openPositions.length === 0) {
@@ -315,50 +315,49 @@
       }
 
       posContainer.innerHTML = '';
-      openPositions.forEach(pos => {
-        const isProfit = pos.pnlPct >= 0;
-        const item = document.createElement('div');
+      openPositions.forEach(function(pos) {
+        var isProfit = pos.pnlPct >= 0;
+        var item = document.createElement('div');
         item.className = "bg-[#070a11] p-3 rounded border border-slate-800 flex justify-between items-center font-mono";
-        item.innerHTML = `
-          <div>
-            <div class="font-bold text-slate-100">${pos.symbol} <span class="text-[9px] px-1 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">SCORE ${pos.score}</span></div>
-            <div class="text-[10px] text-slate-400">Entry: $${pos.entryPrice} | Cur: $${pos.currentPrice} | Size: $${pos.sizeUSD.toFixed(2)}</div>
-          </div>
-          <div class="text-right">
-            <div class="font-bold text-sm ${isProfit ? 'text-emerald-400' : 'text-rose-400'}">${isProfit ? '+' : ''}${pos.pnlPct}% ($${pos.pnlUSD.toFixed(4)})</div>
-            <div class="text-[9px] text-slate-500">TP: +15% | SL: -10%</div>
-          </div>
-        `;
+        item.innerHTML = 
+          '<div>' +
+            '<div class="font-bold text-slate-100">' + pos.symbol + ' <span class="text-[9px] px-1 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">SCORE ' + pos.score + '</span></div>' +
+            '<div class="text-[10px] text-slate-400">Entry: $' + pos.entryPrice + ' | Cur: $' + pos.currentPrice + ' | Size: $' + pos.sizeUSD.toFixed(2) + '</div>' +
+          '</div>' +
+          '<div class="text-right">' +
+            '<div class="font-bold text-sm ' + (isProfit ? 'text-emerald-400' : 'text-rose-400') + '">' + (isProfit ? '+' : '') + pos.pnlPct + '% ($' + pos.pnlUSD.toFixed(4) + ')</div>' +
+            '<div class="text-[9px] text-slate-500">TP: +15% | SL: -10%</div>' +
+          '</div>';
         posContainer.appendChild(item);
       });
     }
 
     function updateUI() {
-      document.getElementById('stat-balance').innerText = `$${balance.toFixed(4)}`;
+      document.getElementById('stat-balance').innerText = '$' + balance.toFixed(4);
       
-      const realPnlElem = document.getElementById('stat-realized');
-      realPnlElem.innerText = `${netRealizedPnL >= 0 ? '+' : ''}$${netRealizedPnL.toFixed(4)}`;
-      realPnlElem.className = `font-mono font-bold text-base ${netRealizedPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+      var realPnlElem = document.getElementById('stat-realized');
+      realPnlElem.innerText = (netRealizedPnL >= 0 ? '+' : '') + '$' + netRealizedPnL.toFixed(4);
+      realPnlElem.className = 'font-mono font-bold text-base ' + (netRealizedPnL >= 0 ? 'text-emerald-400' : 'text-rose-400');
 
-      document.getElementById('stat-gas-paid').innerText = `$${totalGasPaid.toFixed(4)}`;
+      document.getElementById('stat-gas-paid').innerText = '$' + totalGasPaid.toFixed(4);
 
-      const totalTrades = wins + losses;
-      const winRate = totalTrades > 0 ? Math.round((wins / totalTrades) * 100) : 0;
-      document.getElementById('stat-winrate').innerText = `${winRate}%`;
-      document.getElementById('stat-winloss').innerText = `${wins} Win / ${losses} Loss`;
+      var totalTrades = wins + losses;
+      var winRate = totalTrades > 0 ? Math.round((wins / totalTrades) * 100) : 0;
+      document.getElementById('stat-winrate').innerText = winRate + '%';
+      document.getElementById('stat-winloss').innerText = wins + ' Win / ' + losses + ' Loss';
 
-      document.getElementById('stat-open-pos').innerText = `${openPositions.length} / ${maxPositions}`;
+      document.getElementById('stat-open-pos').innerText = openPositions.length + ' / ' + maxPositions;
 
-      const maxDD = balance < baseCapital ? (((baseCapital - balance) / baseCapital) * 100).toFixed(2) : "0.00";
-      document.getElementById('stat-drawdown').innerText = `-${maxDD}%`;
+      var maxDD = balance < baseCapital ? (((baseCapital - balance) / baseCapital) * 100).toFixed(2) : "0.00";
+      document.getElementById('stat-drawdown').innerText = '-' + maxDD + '%';
     }
 
     function toggleBotEngine() {
       if (killSwitchActivated) return;
       isRunning = !isRunning;
-      const btn = document.getElementById('bot-toggle-btn');
-      const badge = document.getElementById('system-status-badge');
-      const pulse = document.getElementById('live-pulse');
+      var btn = document.getElementById('bot-toggle-btn');
+      var badge = document.getElementById('system-status-badge');
+      var pulse = document.getElementById('live-pulse');
 
       if (isRunning) {
         btn.innerText = 'Pause Engine';
@@ -391,18 +390,10 @@
 
     function setMode(mode) {
       currentMode = mode;
-      const demoBtn = document.getElementById('mode-demo-btn');
-      const liveBtn = document.getElementById('mode-live-btn');
+      var demoBtn = document.getElementById('mode-demo-btn');
+      var liveBtn = document.getElementById('mode-live-btn');
 
       if (mode === 'DEMO') {
         demoBtn.className = 'px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40';
         liveBtn.className = 'px-2.5 py-1 rounded text-slate-500 hover:text-slate-300';
-        addLog('<span class="text-amber-400">[MODE]</span>', 'Mode DEMO Aktif.', 'text-amber-300');
-      } else {
-        liveBtn.className = 'px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40';
-        demoBtn.className = 'px-2.5 py-1 rounded text-slate-500 hover:text-slate-300';
-        addLog('<span class="text-emerald-400">[MODE]</span>', 'Mode LIVE Aktif.', 'text-emerald-300');
-      }
-    }
-
-    function up
+        ad
